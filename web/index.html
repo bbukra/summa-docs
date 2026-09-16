@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Summa — Daily Puzzle</title>
+<meta name="description" content="Summa's free daily number puzzle. Arrange the numbers with the given operations to reach the target. A new puzzle every day.">
+<link rel="canonical" href="https://playsumma.netlify.app/">
+
+<!-- Rich link preview -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Summa">
+<meta property="og:title" content="Summa — Daily Puzzle">
+<meta property="og:description" content="Arrange the numbers to reach the target. A new free puzzle every day.">
+<meta property="og:url" content="https://playsumma.netlify.app/">
+<meta property="og:image" content="https://playsumma.netlify.app/og-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Summa — Daily Puzzle">
+<meta name="twitter:description" content="Arrange the numbers to reach the target. A new free puzzle every day.">
+<meta name="twitter:image" content="https://playsumma.netlify.app/og-preview.png">
+<meta name="theme-color" content="#EDE3D2">
+
+<link rel="preload" href="fonts/summa-numbers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/summa-logo.woff2" as="font" type="font/woff2" crossorigin>
+
+<style>
+/* ============================ Fonts ============================ */
+@font-face{
+  font-family:"SummaNumbers";
+  src:url("fonts/summa-numbers.woff2") format("woff2");
+  font-weight:600; font-display:swap;
+}
+@font-face{
+  font-family:"SummaLogo";
+  src:url("fonts/summa-logo.woff2") format("woff2");
+  font-weight:600; font-display:swap;
+}
+
+/* ============================ Design tokens (mirror Colors.swift) ============================ */
+:root{
+  --paper:#EDE3D2; --paper-deep:#E4D8C2; --paper-lift:#F4ECDC;
+  --tile:#D9B98A; --tile-deep:#C9A472;
+  --ink:#3A2D1F; --ink-mid:#5C4A36; --ink-light:#7C6748; --ink-muted:#A9947A;
+  --accent:#7A5230; --accent-deep:#5E3D22; --accent-deepest:#4A2F18;
+  --gold:#BF8C2C;
+  --success:#5A7A3E; --error:#A04832;
+  --cream:#FFFAF0; --umber:#3C280F; --shadow:#503719;
+  --correct-top:#A9C089; --correct-bottom:#88A765; --correct-ink:#2F4321;
+  --wrong-top:#E0BFA0; --wrong-bottom:#C99A78;
+
+  /* Brand text = the system serif (New York on Apple, via ui-serif). */
+  --brand:ui-serif,"New York",Georgia,"Times New Roman",serif;
+  --numbers:"SummaNumbers",ui-serif,Georgia,serif;
+  --logo:"SummaLogo",ui-serif,Georgia,serif;
+
+  /* Tile geometry — sized to fit the expression on narrow screens (JS adjusts --tile-w). */
+  --tile-w:62px;
+  --tile-h:calc(var(--tile-w) * 78 / 62);
+  --tile-r:calc(var(--tile-w) * 12 / 62);
+  --op-w:calc(var(--tile-w) * 32 / 62);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+[hidden]{display:none!important;}
+/* When restoring an already-solved board on load, suppress every transition/animation for one
+   frame so the solved state paints instantly (no pool flash, no replayed solve animation). */
+#board.instant *{transition:none!important;animation:none!important;}
+html,body{margin:0;height:100%;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--brand);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  touch-action:manipulation;
+  /* It's a game, not a document — stop iOS/Android from selecting glyphs (the Σ logo, tile
+     numbers, hint text) and popping the "look up / search" callout on tap-and-hold. */
+  -webkit-user-select:none; -moz-user-select:none; user-select:none;
+  -webkit-touch-callout:none;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+
+/* ============================ Layout shell ============================ */
+#app{
+  max-width:440px;
+  margin:0 auto;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  padding:0 24px calc(16px + env(safe-area-inset-bottom));
+  position:relative;
+}
+
+/* ---- Header ---- */
+header{
+  padding-top:calc(18px + env(safe-area-inset-top));
+  display:flex; align-items:center; justify-content:space-between;
+  position:relative; min-height:44px;
+}
+.logo-link{display:flex;align-items:center;text-decoration:none;}
+.logo-mark{
+  width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(to bottom,var(--tile),var(--tile-deep));
+  box-shadow:0 2px 6px rgba(80,55,25,.22), inset 0 1px 0 rgba(255,250,240,.5);
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-mark span{font-family:var(--logo);font-size:21px;color:var(--ink);line-height:1;padding-top:1px;}
+.header-title{
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  text-align:center;pointer-events:none;
+}
+.header-title .eyebrow{
+  font-family:var(--brand);font-size:11px;font-weight:500;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--ink-light);
+}
+.header-title .date{
+  font-family:var(--brand);font-size:20px;font-weight:500;color:var(--ink);
+  text-shadow:0 1px 1px rgba(244,236,220,.6);margin-top:2px;
+}
+.header-right{width:34px;display:flex;justify-content:flex-end;}
+.share-btn,.hint-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,250,240,.5);
+  box-shadow:0 2px 6px rgba(80,55,25,.15);
+  display:flex;align-items:center;justify-content:center;color:var(--ink);
+}
+.share-btn svg{width:18px;height:18px;}
+.hint-btn svg{width:22px;height:22px;}
+
+/* ---- Target ---- */
+.target{ text-align:center; margin-top:26px; }
+.target .reach{
+  font-family:var(--brand);font-size:15px;font-weight:500;letter-spacing:2.5px;
+  color:var(--ink-light);
+}
+.target .value{
+  font-family:var(--numbers);font-size:96px;line-height:1;color:var(--ink);
+  text-shadow:0 1px 1px rgba(244,236,220,.6);margin-top:2px;
+}
+
+/* ---- Expression ---- */
+.spacer{flex:1 1 auto;min-height:12px;}
+.expr-wrap{ width:100%; display:flex; justify-content:center; }
+.expr{ display:flex; align-items:center; justify-content:center; }
+.well{
+  width:var(--tile-w);height:var(--tile-h);border-radius:var(--tile-r);
+  position:relative;flex:0 0 auto;
+  background:rgba(122,82,48,.08);
+}
+.well::after{ /* inner top-shade + bottom-cream sheen */
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to bottom,
+     rgba(80,55,25,.18) 0%, rgba(80,55,25,0) 10%,
+     rgba(255,250,240,0) 97.5%, rgba(255,250,240,.40) 100%);
+}
+.op{ width:var(--op-w); height:var(--tile-h); flex:0 0 auto; }
+.op svg{display:block;width:100%;height:100%;}
+.fraction{ display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto; }
+.fbar{width:var(--tile-w);}
+.fbar .b1{height:3px;border-radius:3px;background:var(--ink-mid);}
+.fbar .b2{height:1px;background:rgba(255,250,240,.4);}
+
+/* ---- Tiles (token layer via reparenting) ---- */
+.tile{
+  width:var(--tile-w);height:var(--tile-h);border-radius:var(--tile-r);
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--numbers);font-size:calc(var(--tile-w) * .5);
+  color:var(--ink);
+  background:linear-gradient(to bottom,var(--tile),var(--tile-deep));
+  box-shadow:0 4px 12px rgba(80,55,25,.20), 0 1px 2px rgba(80,55,25,.15);
+  touch-action:none;user-select:none;-webkit-user-select:none;
+  transition:transform .32s cubic-bezier(.2,.8,.2,1), box-shadow .25s, background .25s, color .25s;
+  will-change:transform;
+  z-index:1;
+}
+.tile::before{ /* top cream highlight + bottom umber shade lines */
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to bottom,
+     rgba(255,250,240,.60) 0%, rgba(255,250,240,0) 2.5%,
+     rgba(60,40,15,0) 97.5%, rgba(60,40,15,.18) 100%);
+}
+.tile .glyph{position:relative;line-height:1;}
+.tile.dragging{ z-index:50;transition:none;transform:scale(1.08);
+  box-shadow:0 14px 26px rgba(80,55,25,.28), 0 2px 4px rgba(80,55,25,.18); }
+.tile.wrong{ background:linear-gradient(to bottom,var(--wrong-top),var(--wrong-bottom));color:var(--error);
+  box-shadow:0 12px 22px rgba(160,72,50,.25), 0 1px 2px rgba(160,72,50,.18);
+  outline:2px solid rgba(160,72,50,.7);outline-offset:2px; }
+.tile.correct{ background:linear-gradient(to bottom,var(--correct-top),var(--correct-bottom));color:var(--correct-ink);
+  box-shadow:0 16px 24px rgba(90,122,62,.32), 0 1px 2px rgba(80,55,25,.15);
+  outline:2px solid rgba(90,122,62,.75);outline-offset:2px; }
+.tile.pop{ animation:pop .4s cubic-bezier(.34,1.56,.64,1); }
+@keyframes pop{ 0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)} }
+
+/* pool cell = a tile's home */
+.poolcell{width:var(--tile-w);height:var(--tile-h);flex:0 0 auto;position:relative;}
+
+/* ---- Result area ---- */
+.result{ height:72px; margin-top:16px; text-align:center; position:relative; }
+.result .wrong-line,.result .ok-line{position:absolute;left:0;right:0;top:0;}
+.result .wrong-line{opacity:0;transition:opacity .25s;}
+.result .wrong-line.show{opacity:1;}
+.result .eq{font-family:var(--brand);font-size:24px;font-weight:500;}
+.result .wrong-line .eq{color:var(--error);text-shadow:0 1px 2px rgba(160,72,50,.2);}
+.result .wrong-line .sub{font-family:var(--brand);font-size:13px;color:var(--ink-light);margin-top:6px;}
+.result .ok-line{opacity:0;transform:translateY(18px);transition:opacity .4s ease-out,transform .4s ease-out;}
+.result .ok-line.show{opacity:1;transform:translateY(0);}
+.result .ok-line .eq{color:var(--success);text-shadow:0 1px 1px rgba(255,250,240,.6);}
+
+/* ---- Bottom (pool + clear) ---- */
+.bottom{ position:relative; }
+.pool{display:flex;flex-direction:column;gap:12px;align-items:center;}
+.pool .row{display:flex;gap:12px;justify-content:center;}
+.clear-wrap{display:flex;justify-content:center;margin-top:24px;}
+.clear-btn{
+  display:flex;align-items:center;gap:8px;height:40px;padding:0 20px;border-radius:20px;
+  background:rgba(255,250,240,.5);color:var(--ink);
+  font-family:var(--brand);font-size:16px;font-weight:500;letter-spacing:.4px;
+  box-shadow:0 2px 6px rgba(80,55,25,.15);
+}
+.clear-btn svg{width:16px;height:16px;}
+.bottom .play-controls{transition:opacity .25s;}
+.bottom.solved .play-controls{opacity:0;pointer-events:none;}
+
+/* ---- Success card ---- */
+.success{
+  position:absolute;left:0;right:0;bottom:12px;
+  opacity:0;transform:translateY(18px);transition:opacity .4s ease-out,transform .4s ease-out;
+  pointer-events:none;
+}
+.success.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+.success .headline{text-align:center;}
+.success .headline .h{font-family:var(--brand);font-size:17px;font-weight:500;letter-spacing:.3px;color:var(--ink);}
+.success .headline .sub{font-family:var(--brand);font-size:13px;color:var(--ink-light);margin-top:5px;}
+.success .time{font-family:var(--brand);font-size:15px;font-weight:500;color:var(--ink-mid);margin-top:6px;}
+.cta-share{
+  margin-top:20px;width:100%;height:52px;border-radius:26px;
+  background:linear-gradient(to bottom,var(--accent),var(--accent-deep));
+  color:var(--paper-lift);font-family:var(--brand);font-size:16px;font-weight:500;letter-spacing:.4px;
+  box-shadow:0 6px 16px rgba(80,55,25,.28),0 1px 3px rgba(80,55,25,.14);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.cta-share svg{width:17px;height:17px;}
+.stores{display:flex;gap:12px;margin-top:14px;}
+.store-btn{
+  flex:1;height:52px;border-radius:14px;
+  background:var(--ink);color:var(--cream);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 3px 10px rgba(80,55,25,.22);
+  text-decoration:none;
+}
+.store-btn svg{width:22px;height:22px;flex:0 0 auto;}
+.store-btn .st{display:flex;flex-direction:column;line-height:1.1;text-align:left;}
+.store-btn .st small{font-size:9px;opacity:.8;font-family:var(--brand);letter-spacing:.3px;}
+.store-btn .st b{font-size:15px;font-weight:600;font-family:var(--brand);}
+.store-btn.soon{opacity:.85;}
+
+/* ---- Helper hint (empty board only) ---- */
+.hint-line{
+  text-align:center;font-family:var(--brand);font-size:13px;color:var(--ink-muted);
+  margin-top:10px;transition:opacity .3s;
+}
+.hint-line.hide{opacity:0;}
+
+/* ---- Hint modal ---- */
+.modal-overlay{
+  position:fixed;inset:0;z-index:150;
+  background:rgba(30,20,10,.55);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  opacity:0;animation:fadeIn .2s ease forwards;
+}
+.modal-card{
+  width:100%;max-width:360px;background:var(--paper-lift);border-radius:24px;
+  padding:26px 22px 14px;text-align:center;
+  box-shadow:0 20px 50px rgba(0,0,0,.30);
+  animation:popIn .25s cubic-bezier(.34,1.4,.64,1) both;
+}
+.modal-seal{
+  width:56px;height:56px;border-radius:50%;margin:0 auto 14px;
+  background:linear-gradient(to bottom,var(--accent),var(--accent-deep));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(80,55,25,.28), inset 0 1px 0 rgba(255,250,240,.25);
+}
+.modal-seal svg{width:28px;height:28px;color:var(--cream);}
+.modal-title{
+  font-family:var(--brand);font-size:19px;font-weight:500;color:var(--ink);
+  line-height:1.35;margin-bottom:18px;
+}
+.modal-card .stores{margin-top:0;}
+.modal-close{
+  margin-top:12px;width:100%;padding:10px;
+  font-family:var(--brand);font-size:14px;color:var(--ink-light);
+}
+@keyframes fadeIn{to{opacity:1;}}
+@keyframes popIn{from{opacity:0;transform:scale(.94) translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ---- Post-solve "get the app" pitch ---- */
+#pitchModal{z-index:160;}
+/* While arming (first ~0.5s) the card can't be tapped, so a stray tap meant for something
+   else doesn't hit a button. The overlay still blocks the board underneath. */
+#pitchModal.arming .modal-card{pointer-events:none;}
+.pitch-card{max-width:384px;text-align:left;max-height:90dvh;overflow-y:auto;}
+.pitch-head{text-align:center;font-family:var(--brand);font-size:22px;font-weight:600;color:var(--ink);}
+.pitch-sub{
+  text-align:center;font-family:var(--brand);font-size:14px;color:var(--ink-light);
+  line-height:1.45;margin:8px 6px 20px;
+}
+.feat{display:flex;gap:13px;align-items:center;margin:12px 2px;}
+.feat-ic{
+  flex:0 0 auto;width:40px;height:40px;border-radius:12px;
+  background:rgba(122,82,48,.10);display:flex;align-items:center;justify-content:center;color:var(--accent);
+}
+.feat-ic svg{width:21px;height:21px;}
+.feat-tx{font-family:var(--brand);font-size:16px;font-weight:500;color:var(--ink);}
+.pitch-card .stores{margin-top:20px;}
+.pitch-foot{
+  margin-top:16px;font-family:var(--brand);font-size:12.5px;color:var(--ink-light);
+  line-height:1.45;text-align:center;
+}
+
+/* ---- Toast ---- */
+.toast{
+  position:fixed;left:50%;bottom:38px;transform:translateX(-50%) translateY(20px);
+  background:var(--accent-deepest);color:var(--cream);
+  font-family:var(--brand);font-size:14px;padding:11px 20px;border-radius:22px;
+  box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;z-index:200;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ---- Loading / error ---- */
+.center-msg{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  text-align:center;color:var(--ink-light);font-family:var(--brand);
+}
+.center-msg .spin{width:34px;height:34px;border-radius:50%;
+  border:3px solid rgba(122,82,48,.2);border-top-color:var(--accent);animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.center-msg button{
+  padding:10px 22px;border-radius:22px;background:var(--accent);color:var(--paper-lift);
+  font-size:15px;font-weight:500;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms!important;transition-duration:.08s!important;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="logo-link" aria-label="Summa">
+      <span class="logo-mark"><span>&#931;</span></span>
+    </span>
+    <div class="header-title">
+      <div class="eyebrow">Daily</div>
+      <div class="date" id="dateLabel">&nbsp;</div>
+    </div>
+    <div class="header-right">
+      <button class="hint-btn" id="hintBtn" aria-label="Get a hint" hidden>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2v.4h6v-.4c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2z"/><rect x="9" y="18" width="6" height="1.6" rx=".8"/><rect x="10" y="20.4" width="4" height="1.6" rx=".8"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="board" hidden>
+    <div class="target">
+      <div class="reach">REACH</div>
+      <div class="value" id="targetValue">0</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="expr-wrap"><div class="expr" id="expr"></div></div>
+    <div class="result" id="result">
+      <div class="wrong-line" id="wrongLine"><div class="eq" id="wrongEq">= 0</div><div class="sub">not quite - try again</div></div>
+      <div class="ok-line" id="okLine"><div class="eq" id="okEq">= 0</div></div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="bottom" id="bottom">
+      <div class="play-controls">
+        <div class="pool" id="pool"></div>
+        <div class="hint-line" id="hintLine">Drag numbers into the slots to reach the target.</div>
+        <div class="clear-wrap">
+          <button class="clear-btn" id="clearBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-8 8"/><path d="M6 11l6 6"/></svg>
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="success" id="success">
+        <div class="headline">
+          <div class="h" id="successH">Daily puzzle solved</div>
+          <div class="sub">Come back tomorrow or download the app for more.</div>
+          <div class="time" id="successTime"></div>
+        </div>
+        <button class="cta-share" id="shareBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Share result
+        </button>
+        <div class="stores">
+          <a class="store-btn js-appstore" href="#" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.9c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.4 2 .9 0 1.3-.6 2.4-.6 1.1 0 1.4.6 2.4.6 1 0 1.6-.9 2.3-1.9.7-1.1 1-2.1 1-2.2 0 0-1.9-.7-1.9-3zm-2-5.6c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.1-.5.5-.9 1.4-.8 2.3.9.1 1.8-.4 2.2-1z"/></svg>
+            <span class="st"><small>Download on the</small><b>App Store</b></span>
+          </a>
+          <button class="store-btn soon js-play">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.3c-.3.3-.5.7-.5 1.3v16.8c0 .6.2 1 .5 1.3l.1.1L13 12.1v-.2L3.7 2.2l-.1.1z"/><path d="M16.1 15.2l-3.1-3.1v-.2l3.1-3.1.1.1 3.7 2.1c1 .6 1 1.6 0 2.2l-3.7 2.1-.1-.1z"/><path d="M16.2 15.1L13 11.9 3.6 21.3c.4.4 1 .4 1.6.1l11-6.3"/><path d="M16.2 8.9L5.2 2.6c-.6-.3-1.2-.3-1.6.1L13 12.1l3.2-3.2z"/></svg>
+            <span class="st"><small>Get it on</small><b>Google Play</b></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="center-msg" id="loading"><div class="spin"></div><div>Loading today's puzzle…</div></div>
+  <div class="center-msg" id="error" hidden>
+    <div>Today's puzzle isn't available yet.</div>
+    <button id="retryBtn">Try again</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="hintModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="Get a hint">
+    <div class="modal-seal">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2v.4h6v-.4c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2z"/><rect x="9" y="18" width="6" height="1.6" rx=".8"/><rect x="10" y="20.4" width="4" height="1.6" rx=".8"/></svg>
+    </div>
+    <div class="modal-title">To get a hint, download our app</div>
+    <div class="stores">
+      <a class="store-btn js-appstore" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.9c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.4 2 .9 0 1.3-.6 2.4-.6 1.1 0 1.4.6 2.4.6 1 0 1.6-.9 2.3-1.9.7-1.1 1-2.1 1-2.2 0 0-1.9-.7-1.9-3zm-2-5.6c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.1-.5.5-.9 1.4-.8 2.3.9.1 1.8-.4 2.2-1z"/></svg>
+        <span class="st"><small>Download on the</small><b>App Store</b></span>
+      </a>
+      <button class="store-btn soon js-play">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.3c-.3.3-.5.7-.5 1.3v16.8c0 .6.2 1 .5 1.3l.1.1L13 12.1v-.2L3.7 2.2l-.1.1z"/><path d="M16.1 15.2l-3.1-3.1v-.2l3.1-3.1.1.1 3.7 2.1c1 .6 1 1.6 0 2.2l-3.7 2.1-.1-.1z"/><path d="M16.2 15.1L13 11.9 3.6 21.3c.4.4 1 .4 1.6.1l11-6.3"/><path d="M16.2 8.9L5.2 2.6c-.6-.3-1.2-.3-1.6.1L13 12.1l3.2-3.2z"/></svg>
+        <span class="st"><small>Get it on</small><b>Google Play</b></span>
+      </button>
+    </div>
+    <button class="modal-close" id="hintModalClose">Maybe later</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pitchModal" hidden>
+  <div class="modal-card pitch-card" role="dialog" aria-modal="true" aria-label="Get the Summa app">
+    <div class="pitch-head">That was a glimpse</div>
+    <div class="pitch-sub">The full app features:</div>
+
+    <div class="feat">
+      <div class="feat-ic"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="14" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="12" rx="1"/><rect x="17" y="4" width="4" height="17" rx="1"/></svg></div>
+      <div class="feat-tx">Puzzles for every level</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></div>
+      <div class="feat-tx">More daily challenges</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2v.4h6v-.4c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2z"/><rect x="9" y="18" width="6" height="1.6" rx=".8"/><rect x="10" y="20.4" width="4" height="1.6" rx=".8"/></svg></div>
+      <div class="feat-tx">Hints when you're stuck</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9z"/><path d="M10.5 21a2 2 0 0 0 3 0z"/></svg></div>
+      <div class="feat-tx">Optional reminders</div>
+    </div>
+
+    <div class="pitch-foot">Playing consistently gets you more comfortable with numbers.</div>
+
+    <div class="stores">
+      <a class="store-btn js-appstore" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.9c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.4 2 .9 0 1.3-.6 2.4-.6 1.1 0 1.4.6 2.4.6 1 0 1.6-.9 2.3-1.9.7-1.1 1-2.1 1-2.2 0 0-1.9-.7-1.9-3zm-2-5.6c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.1-.5.5-.9 1.4-.8 2.3.9.1 1.8-.4 2.2-1z"/></svg>
+        <span class="st"><small>Download on the</small><b>App Store</b></span>
+      </a>
+      <button class="store-btn soon js-play">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.3c-.3.3-.5.7-.5 1.3v16.8c0 .6.2 1 .5 1.3l.1.1L13 12.1v-.2L3.7 2.2l-.1.1z"/><path d="M16.1 15.2l-3.1-3.1v-.2l3.1-3.1.1.1 3.7 2.1c1 .6 1 1.6 0 2.2l-3.7 2.1-.1-.1z"/><path d="M16.2 15.1L13 11.9 3.6 21.3c.4.4 1 .4 1.6.1l11-6.3"/><path d="M16.2 8.9L5.2 2.6c-.6-.3-1.2-.3-1.6.1L13 12.1l3.2-3.2z"/></svg>
+        <span class="st"><small>Get it on</small><b>Google Play</b></span>
+      </button>
+    </div>
+    <button class="modal-close" id="pitchClose">Keep playing on the web</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================================================================
+   Summa — Daily web puzzle
+   Faithful port of the app's daily board: identical PEMDAS evaluation,
+   identical expression layout, identical placement/drag rules.
+   ====================================================================== */
+"use strict";
+
+const CONFIG = {
+  // Where the daily-window JSON files live (published by the FOURmula GitHub Action),
+  // relative to this page — the daily folder sits alongside index.html.
+  dataPath: "daily/",
+  // day_number of "Daily #1". Currently set to 2026-09-14. Change to your public launch day
+  // so the shared "#N" counts from launch. (day_number = days since 1970-01-01 US-Pacific.)
+  dailyEpochDayNumber: 20710,
+  storeUrls: {
+    appStore: "https://apps.apple.com/app/id6790951155",
+  },
+  shareUrl: location.origin + location.pathname,
+};
+
+/* -------------------- Pacific date (matches the app's calendar) -------------------- */
+function pacificDateISO(d = new Date()){
+  // "en-CA" formats as YYYY-MM-DD; timeZone pins it to US-Pacific like RushCalendar.
+  return new Intl.DateTimeFormat("en-CA",{timeZone:"America/Los_Angeles",
+    year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
+}
+function shortDateLabel(iso){
+  const [y,m,dd] = iso.split("-").map(Number);
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return months[m-1] + " " + dd;                     // "Sep 14", matching DailyPuzzleState.dateLabel
+}
+
+/* -------------------- Math (single source of truth, mirrors PuzzleMath.swift) -------------------- */
+function evaluate(numbers, operators){
+  if(numbers.length===0 || operators.length !== numbers.length-1) return null;
+  const vals=numbers.slice(), ops=operators.slice();
+  let i=0;
+  while(i<ops.length){
+    if(ops[i]==="*"||ops[i]==="/"){
+      if(vals[i+1]===0 && ops[i]==="/") return null;
+      vals[i] = ops[i]==="*" ? vals[i]*vals[i+1] : vals[i]/vals[i+1];
+      vals.splice(i+1,1); ops.splice(i,1);
+    } else i++;
+  }
+  let r=vals[0];
+  for(let j=0;j<ops.length;j++) r = ops[j]==="+" ? r+vals[j+1] : r-vals[j+1];
+  return r;
+}
+function matches(a,b){ return Math.round(a*1000)===Math.round(b*1000); }
+function valueString(n){
+  // 0..2 fraction digits, with thousands separators — mirrors Float.valueString.
+  return Number(n).toLocaleString("en-US",{maximumFractionDigits:2});
+}
+
+/* -------------------- State -------------------- */
+let CFG=null;                 // {availableNumbers, operators, target, number, date, N}
+let placements=[];            // length = slotCount; each entry = pool index or null
+let slotCount=0;
+let clearCount=0;
+let startedAt=0;
+let solved=false;
+let sawWrong=false;
+const tiles=[];               // tiles[i] = DOM element for pool index i
+let poolCells=[];             // poolCells[i]
+let wells=[];                 // wells[slot]
+
+/* -------------------- DOM -------------------- */
+const $ = id => document.getElementById(id);
+const els={};
+["dateLabel","targetValue","expr","result","wrongLine","wrongEq","okLine","okEq",
+ "pool","bottom","clearBtn","success","successTime","shareBtn","hintBtn",
+ "board","loading","error","retryBtn","toast","hintLine","hintModal","hintModalClose",
+ "pitchModal","pitchClose"]
+ .forEach(k=>els[k]=$(k));
+
+/* -------------------- Operator glyph (mirrors OperatorSymbolView) -------------------- */
+function opSVG(op){
+  // viewBox 32x78, centered; formulas match the app's Canvas drawing (scaled from 32-wide frame).
+  const W=32,H=78,cx=16,cy=39;
+  const e=W*0.225, es=e*0.82, lw=Math.max(1.5,W*0.075), dotR=lw*1.1, col="#5C4A36";
+  const line=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${lw}" stroke-linecap="round"/>`;
+  let inner="";
+  if(op==="+") inner=line(cx-es,cy,cx+es,cy)+line(cx,cy-es,cx,cy+es);
+  else if(op==="-") inner=line(cx-es,cy,cx+es,cy);
+  else if(op==="*"){const d=e*0.707;inner=line(cx-d,cy-d,cx+d,cy+d)+line(cx+d,cy-d,cx-d,cy+d);}
+  else if(op==="/"){const dy=es*0.6;
+    inner=`<circle cx="${cx}" cy="${cy-dy}" r="${dotR}" fill="${col}"/><circle cx="${cx}" cy="${cy+dy}" r="${dotR}" fill="${col}"/><line x1="${cx-es}" y1="${cy}" x2="${cx+es}" y2="${cy}" stroke="${col}" stroke-width="${lw}" stroke-linecap="round"/>`;}
+  return `<svg viewBox="0 0 ${W} ${H}">${inner}</svg>`;
+}
+
+/* -------------------- Build the expression scaffold (mirrors ExpressionView.layoutItems) -------------------- */
+function buildExpression(){
+  els.expr.innerHTML="";
+  wells=new Array(slotCount).fill(null);
+  const ops=CFG.operators;
+  const makeWell=(idx)=>{
+    const w=document.createElement("div"); w.className="well"; w.dataset.slot=idx;
+    wells[idx]=w; return w;
+  };
+  const makeOp=(str)=>{
+    const o=document.createElement("div"); o.className="op"; o.innerHTML=opSVG(str); return o;
+  };
+  let ptr=0;
+  while(ptr<slotCount){
+    if(ptr+1<slotCount && ops[ptr]==="/"){
+      const frac=document.createElement("div"); frac.className="fraction";
+      frac.appendChild(makeWell(ptr));
+      const bar=document.createElement("div"); bar.className="fbar";
+      bar.innerHTML='<div class="b1"></div><div class="b2"></div>';
+      frac.appendChild(bar);
+      frac.appendChild(makeWell(ptr+1));
+      els.expr.appendChild(frac);
+      ptr+=2;
+    } else {
+      els.expr.appendChild(makeWell(ptr));
+      ptr+=1;
+    }
+    if(ptr<slotCount) els.expr.appendChild(makeOp(ops[ptr-1]));
+  }
+}
+
+/* -------------------- Build the number pool (rows of <=4, balanced) -------------------- */
+function buildPool(){
+  els.pool.innerHTML="";
+  poolCells=[];
+  const count=CFG.availableNumbers.length;
+  const rowCount=Math.max(1,Math.ceil(count/4));
+  const perRow=Math.ceil(count/rowCount);
+  for(let start=0;start<count;start+=perRow){
+    const row=document.createElement("div"); row.className="row";
+    for(let i=start;i<Math.min(start+perRow,count);i++){
+      const cell=document.createElement("div"); cell.className="poolcell";
+      poolCells[i]=cell; row.appendChild(cell);
+    }
+    els.pool.appendChild(row);
+  }
+}
+
+/* -------------------- Build tiles -------------------- */
+function buildTiles(){
+  tiles.length=0;
+  for(let i=0;i<CFG.availableNumbers.length;i++){
+    const t=document.createElement("div"); t.className="tile"; t.dataset.pool=i;
+    const g=document.createElement("span"); g.className="glyph";
+    g.textContent=valueString(CFG.availableNumbers[i]);
+    t.appendChild(g);
+    tiles[i]=t;
+    poolCells[i].appendChild(t);
+    attachTileHandlers(t,i);
+  }
+}
+
+/* -------------------- FLIP helper: glide tiles when they change home -------------------- */
+function flip(mutate){
+  const first=tiles.map(t=>t.getBoundingClientRect());
+  mutate();
+  tiles.forEach((t,i)=>{
+    if(t.classList.contains("dragging")) return;
+    const last=t.getBoundingClientRect();
+    const dx=first[i].left-last.left, dy=first[i].top-last.top;
+    if(dx||dy){
+      t.style.transition="none";
+      t.style.transform=`translate(${dx}px,${dy}px)`;
+      t.getBoundingClientRect();               // force reflow
+      t.style.transition="";
+      t.style.transform="";
+    }
+  });
+}
+
+/* -------------------- Placement primitives (mirror GameplayState mutations) -------------------- */
+function placeInFirstEmpty(poolIdx){
+  const slot=placements.findIndex(p=>p===null);
+  if(slot===-1) return false;
+  placements[slot]=poolIdx; return true;
+}
+function dropInSlot(poolIdx,slot){
+  if(slot<0||slot>=slotCount) return false;
+  if(placements.includes(poolIdx)) return false;   // already placed elsewhere
+  placements[slot]=poolIdx; return true;
+}
+function moveTile(fromSlot,toSlot){
+  if(placements[fromSlot]===null||placements[fromSlot]===undefined) return false;
+  if(toSlot!==null && toSlot>=0 && toSlot<slotCount){
+    if(toSlot===fromSlot) return false;
+    const tmp=placements[fromSlot]; placements[fromSlot]=placements[toSlot]; placements[toSlot]=tmp;
+  } else {
+    placements[fromSlot]=null;                       // dropped off any slot → back to pool
+  }
+  return true;
+}
+function clearAll(){
+  let any=false;
+  for(let s=0;s<slotCount;s++) if(placements[s]!==null){ placements[s]=null; any=true; }
+  if(any) clearCount++;
+  return any;
+}
+
+/* -------------------- Render: reparent tiles to homes, apply states -------------------- */
+function render(animate=true){
+  const apply=()=>{
+    for(let i=0;i<tiles.length;i++){
+      const slot=placements.indexOf(i);
+      const home = slot!==-1 ? wells[slot] : poolCells[i];
+      if(tiles[i].parentElement!==home) home.appendChild(tiles[i]);
+    }
+  };
+  if(animate) flip(apply); else apply();
+  updateStates();
+}
+
+function currentResult(){
+  if(placements.some(p=>p===null)) return null;
+  const nums=placements.map(p=>CFG.availableNumbers[p]);
+  return evaluate(nums,CFG.operators);
+}
+function updateStates(){
+  const res=currentResult();
+  const isSolved = res!==null && matches(res,CFG.target);
+  const isWrong  = res!==null && !isSolved;
+
+  tiles.forEach(t=>{ t.classList.toggle("wrong", isWrong); });
+
+  els.wrongLine.classList.toggle("show", isWrong);
+  if(isWrong){ els.wrongEq.textContent="= "+valueString(res); }
+
+  // hide the helper hint after the first placement
+  const anyPlaced = placements.some(p=>p!==null);
+  els.hintLine.classList.toggle("hide", anyPlaced);
+
+  if(isWrong && !sawWrong){ sawWrong=true; }
+
+  if(isSolved && !solved){ onSolved(); }
+}
+
+/* -------------------- Solve -------------------- */
+function onSolved(){
+  solved=true;
+  els.hintBtn.hidden=true;              // no hints once it's solved
+  const timeMs = Date.now()-startedAt;
+  persistSolved(timeMs);
+
+  els.okEq.textContent="= "+valueString(CFG.target);
+  els.bottom.classList.add("solved");
+
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // tiles → green, staggered pop
+  tiles.forEach((t,k)=>{
+    const slot=placements.indexOf(k);
+    if(slot===-1) return;
+    t.classList.remove("wrong");
+    setTimeout(()=>{ t.classList.add("correct"); if(!reduce) t.classList.add("pop"); },
+      reduce?0:(360+slot*70));
+  });
+  setTimeout(()=>els.okLine.classList.add("show"), reduce?60:520);
+  setTimeout(()=>{ els.success.classList.add("show"); }, reduce?120:620);
+
+  showSuccessTime(timeMs);
+  log("web_daily_solved",{puzzle_number:CFG.N, puzzle_date:CFG.date,
+      time_to_solve_ms:timeMs, num_clears:clearCount, saw_wrong:sawWrong});
+
+  // A moment after the celebration, pitch the full app (only on a fresh solve, not on reload).
+  setTimeout(showPitch, 2500);
+}
+function showSuccessTime(ms){
+  const s=Math.round(ms/1000), m=Math.floor(s/60), r=s%60;
+  els.successTime.textContent="Solved in "+ (m>0 ? `${m}:${String(r).padStart(2,"0")}` : `${r}s`);
+}
+
+/* -------------------- Restore an already-solved day -------------------- */
+function firstSolution(){
+  // brute-force one valid placement (ordered pick of slotCount distinct pool numbers)
+  const nums=CFG.availableNumbers, n=nums.length, target=CFG.target, ops=CFG.operators;
+  const chosen=[]; const used=new Array(n).fill(false);
+  let found=null;
+  (function search(){
+    if(found) return;
+    if(chosen.length===slotCount){
+      const r=evaluate(chosen.map(i=>nums[i]),ops);
+      if(r!==null && matches(r,target)) found=chosen.slice();
+      return;
+    }
+    for(let i=0;i<n && !found;i++){ if(used[i]) continue; used[i]=true; chosen.push(i);
+      search(); chosen.pop(); used[i]=false; }
+  })();
+  return found;
+}
+function restoreSolved(timeMs){
+  // Mark solved BEFORE render() — otherwise render()'s updateStates() sees a filled+correct board
+  // with solved still false and re-fires onSolved(), which overwrites the saved time with ~0 (the
+  // timer just reset on load) and re-triggers the pitch on every reload.
+  solved=true;
+  els.hintBtn.hidden=true;
+  // Paint the already-solved state with no transitions so the pool doesn't flash before it hides
+  // and the solve animation doesn't replay on reload.
+  els.board.classList.add("instant");
+  const sol=firstSolution();
+  if(sol) for(let s=0;s<slotCount;s++) placements[s]=sol[s];
+  render(false);
+  els.okEq.textContent="= "+valueString(CFG.target);
+  els.bottom.classList.add("solved");
+  tiles.forEach(t=>{ if(placements.includes(+t.dataset.pool)) t.classList.add("correct"); });
+  els.okLine.classList.add("show");
+  els.success.classList.add("show");
+  if(typeof timeMs==="number") showSuccessTime(timeMs);
+  void els.board.offsetWidth;                                    // flush the styles above instantly
+  setTimeout(()=>els.board.classList.remove("instant"), 50);     // timer fires even in a hidden tab
+}
+
+/* -------------------- Interactions (tap + pointer drag) -------------------- */
+const SNAP=55;
+function nearestSlot(x,y){
+  let best=null;
+  for(let s=0;s<slotCount;s++){
+    const r=wells[s].getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const d=Math.hypot(cx-x,cy-y);
+    if(d<=SNAP*(r.width/62) && (best===null||d<best.d)) best={s,d};
+  }
+  return best? best.s : null;
+}
+function attachTileHandlers(tile,index){
+  let dragging=false, moved=false, startX=0,startY=0, pid=null, offX=0,offY=0, baseRect=null;
+  const DOWN_MOVE=6;
+
+  tile.addEventListener("pointerdown",e=>{
+    if(solved) return;
+    pid=e.pointerId; startX=e.clientX; startY=e.clientY; moved=false; dragging=false;
+    baseRect=tile.getBoundingClientRect();
+    offX=e.clientX-(baseRect.left+baseRect.width/2);
+    offY=e.clientY-(baseRect.top+baseRect.height/2);
+    tile.setPointerCapture(pid);
+  });
+  tile.addEventListener("pointermove",e=>{
+    if(pid===null||solved) return;
+    const dx=e.clientX-startX, dy=e.clientY-startY;
+    if(!dragging && Math.hypot(dx,dy)>DOWN_MOVE){
+      dragging=true; moved=true; tile.classList.add("dragging");
+    }
+    if(dragging){
+      // position tile centre under the finger, relative to its current home
+      const home=tile.parentElement.getBoundingClientRect();
+      const tx=(e.clientX-offX)-(home.left+home.width/2);
+      const ty=(e.clientY-offY)-(home.top+home.height/2);
+      tile.style.transform=`translate(${tx}px,${ty}px) scale(1.08)`;
+    }
+  });
+  const finish=e=>{
+    if(pid===null) return;
+    try{tile.releasePointerCapture(pid);}catch(_){}
+    const wasDragging=dragging; pid=null;
+    if(!wasDragging){
+      if(!moved) tap(index);
+      return;
+    }
+    tile.classList.remove("dragging");
+    tile.style.transform="";
+    const slot=placements.indexOf(index);
+    const target=nearestSlot(e.clientX,e.clientY);
+    let changed=false;
+    if(slot!==-1){ changed=moveTile(slot,target); }             // placed tile
+    else if(target!==null){ changed=dropInSlot(index,target); } // pool tile onto slot
+    // else: pool tile in open space → just settle home
+    dragging=false;
+    render(true);
+  };
+  tile.addEventListener("pointerup",finish);
+  tile.addEventListener("pointercancel",e=>{ if(pid!==null){ tile.classList.remove("dragging"); tile.style.transform=""; pid=null; dragging=false; render(true);} });
+}
+function tap(index){
+  if(solved) return;
+  const slot=placements.indexOf(index);
+  if(slot!==-1) placements[slot]=null;   // placed → back to pool
+  else placeInFirstEmpty(index);          // pool → first empty
+  render(true);
+}
+
+/* -------------------- Fit the expression to narrow screens -------------------- */
+function fitExpression(){
+  document.documentElement.style.setProperty("--tile-w","62px");
+  const avail = els.expr.parentElement.clientWidth;
+  const need = els.expr.scrollWidth;
+  if(need>avail){
+    const w=Math.max(40, Math.floor(62*avail/need));
+    document.documentElement.style.setProperty("--tile-w", w+"px");
+  }
+}
+
+/* -------------------- Persistence (solved-today only) -------------------- */
+function storeKey(){ return "summa_daily_"+CFG.date; }
+function persistSolved(timeMs){
+  try{ localStorage.setItem(storeKey(), JSON.stringify({solved:true,timeMs,ts:Date.now()})); }catch(_){}
+}
+function loadSolved(){
+  try{ const v=localStorage.getItem(storeKey()); return v?JSON.parse(v):null; }catch(_){ return null; }
+}
+
+/* -------------------- Share -------------------- */
+function buildShareText(){
+  const t=els.successTime.textContent || "Solved";
+  return `Summa Daily #${CFG.N} · ${shortDateLabel(CFG.date)}\n${t} ✅\nPlay free: ${CONFIG.shareUrl}`;
+}
+async function doShare(){
+  const text=buildShareText();
+  log("web_share_click",{puzzle_number:CFG.N, method:(navigator.share?"native":"clipboard")});
+  if(navigator.share){
+    try{ await navigator.share({title:"Summa Daily", text}); return; }catch(_){ /* fall through */ }
+  }
+  try{ await navigator.clipboard.writeText(text); toast("Result copied — paste it anywhere!"); }
+  catch(_){ toast("Couldn't copy on this browser"); }
+}
+
+/* -------------------- Toast -------------------- */
+let toastTimer=null;
+function toast(msg){
+  els.toast.textContent=msg; els.toast.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>els.toast.classList.remove("show"),2400);
+}
+
+/* -------------------- Analytics (defined by the firebase module; queued until ready) -------------------- */
+window.summaLogQueue=window.summaLogQueue||[];
+function log(name,params){ (window.summaLog||((n,p)=>window.summaLogQueue.push([n,p])))(name,params); }
+
+/* -------------------- Boot -------------------- */
+async function loadDaily(){
+  els.error.hidden=true; els.loading.hidden=false; els.board.hidden=true;
+  const date=pacificDateISO();
+  try{
+    const res=await fetch(CONFIG.dataPath+date+".json",{cache:"no-cache"});
+    if(!res.ok) throw new Error("not found");
+    const data=await res.json();
+    CFG={
+      availableNumbers:data.available_numbers,
+      operators:data.operators,
+      target:data.target_result,
+      number:data.number,
+      date:data.date,
+      N:(data.day_number - CONFIG.dailyEpochDayNumber) + 1,
+    };
+    startGame();
+  }catch(err){
+    els.loading.hidden=true; els.error.hidden=false;
+  }
+}
+
+function startGame(){
+  slotCount=CFG.operators.length+1;
+  placements=new Array(slotCount).fill(null);
+  clearCount=0; solved=false; sawWrong=false; startedAt=Date.now();
+
+  els.dateLabel.textContent=shortDateLabel(CFG.date);
+  els.targetValue.textContent=valueString(CFG.target);
+  document.querySelectorAll(".js-appstore").forEach(a=>a.href=CONFIG.storeUrls.appStore);
+
+  buildExpression(); buildPool(); buildTiles();
+  els.loading.hidden=true; els.board.hidden=false; els.hintBtn.hidden=false;
+  fitExpression();
+
+  const prev=loadSolved();
+  if(prev && prev.solved){ restoreSolved(prev.timeMs); }
+  else { render(false); }
+
+  log("web_daily_view",{puzzle_number:CFG.N, puzzle_date:CFG.date, already_solved:!!(prev&&prev.solved)});
+}
+
+/* -------------------- Wire up -------------------- */
+els.clearBtn.addEventListener("click",()=>{ if(solved) return; if(clearAll()) render(true); });
+els.shareBtn.addEventListener("click",doShare);
+els.retryBtn.addEventListener("click",loadDaily);
+
+// Hint button (top-right) → "download the app" modal.
+function openHintModal(){ els.hintModal.hidden=false; log("web_hint_tapped",{puzzle_number:CFG?CFG.N:null}); }
+function closeHintModal(){ els.hintModal.hidden=true; }
+els.hintBtn.addEventListener("click",openHintModal);
+els.hintModalClose.addEventListener("click",closeHintModal);
+els.hintModal.addEventListener("click",e=>{ if(e.target===els.hintModal) closeHintModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !els.hintModal.hidden) closeHintModal(); });
+
+// Post-solve app pitch. Shows once, ~2.5s after solving. Deliberately NOT dismissible by tapping
+// the backdrop, and its buttons are inert for the first 0.5s so an in-flight tap can't hit them.
+let pitchShown=false;
+const PITCH_COOLDOWN_MS=72*60*60*1000;   // don't show the pitch more than once per 72h
+function showPitch(){
+  if(pitchShown || !solved) return;
+  let last=0; try{ last=parseInt(localStorage.getItem("summa_pitch_last")||"0",10)||0; }catch(_){}
+  if(Date.now()-last < PITCH_COOLDOWN_MS) return;   // shown recently — skip so we don't nag
+  pitchShown=true;
+  try{ localStorage.setItem("summa_pitch_last", String(Date.now())); }catch(_){}
+  els.pitchModal.hidden=false;
+  els.pitchModal.classList.add("arming");
+  setTimeout(()=>els.pitchModal.classList.remove("arming"), 500);
+  log("web_pitch_shown",{puzzle_number:CFG?CFG.N:null});
+}
+function closePitch(){ els.pitchModal.hidden=true; }
+els.pitchClose.addEventListener("click",closePitch);
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && !els.pitchModal.hidden && !els.pitchModal.classList.contains("arming")) closePitch();
+});
+
+// Store buttons appear in both the success card and the hint modal — wire them all.
+document.querySelectorAll(".js-appstore").forEach(a=>a.addEventListener("click",()=>log("web_store_click",{store:"app_store"})));
+document.querySelectorAll(".js-play").forEach(b=>b.addEventListener("click",e=>{ e.preventDefault(); log("web_store_click",{store:"google_play"}); toast("Coming soon!"); }));
+
+window.addEventListener("resize",()=>{ if(CFG){ fitExpression(); render(false); } });
+
+loadDaily();
+</script>
+
+<!-- Firebase Analytics (loads independently; never blocks the game). -->
+<script type="module">
+  // Paste your Web app config here: Firebase console → Project settings → Your apps → Web (</>).
+  // appId + measurementId are Web-specific; the game runs fine until you fill them in.
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA-nBZ9HEUQdWiYS_PpGQKVeEBRBAJOl1U",
+    authDomain: "summa-94cbd.firebaseapp.com",
+    projectId: "summa-94cbd",
+    storageBucket: "summa-94cbd.firebasestorage.app",
+    messagingSenderId: "848189543790",
+    appId: "TODO_WEB_APP_ID",
+    measurementId: "TODO_MEASUREMENT_ID",   // must start with "G-" to enable analytics
+  };
+  if(FIREBASE_CONFIG.measurementId.startsWith("G-")){
+    try{
+      const {initializeApp} = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+      const {getAnalytics, logEvent} = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js");
+      const app = initializeApp(FIREBASE_CONFIG);
+      const analytics = getAnalytics(app);
+      window.summaLog = (name,params)=>{ try{ logEvent(analytics,name,params||{}); }catch(_){} };
+      (window.summaLogQueue||[]).forEach(([n,p])=>window.summaLog(n,p));
+      window.summaLogQueue=[];
+    }catch(e){ console.warn("Summa analytics unavailable:",e); }
+  } else {
+    console.info("Summa analytics not configured (set FIREBASE_CONFIG.measurementId).");
+    window.summaLog=(n,p)=>console.debug("[analytics]",n,p||{});
+    (window.summaLogQueue||[]).forEach(([n,p])=>window.summaLog(n,p));
+  }
+</script>
+</body>
+</html>
