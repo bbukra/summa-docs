@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Summa — Daily Puzzle</title>
-<meta name="description" content="Summa's free daily number puzzle. Arrange the numbers with the given operations to reach the target. A new puzzle every day.">
-<link rel="canonical" href="https://playsumma.netlify.app/">
+<title>Summa — Try It</title>
+<meta name="description" content="Try Summa: two quick number puzzles. Arrange the numbers with the given operations to reach the target.">
+<link rel="canonical" href="https://playsumma.netlify.app/intro">
 
 <!-- Rich link preview -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Summa">
-<meta property="og:title" content="Summa — Daily Puzzle">
-<meta property="og:description" content="Arrange the numbers to reach the target. A new free puzzle every day.">
-<meta property="og:url" content="https://playsumma.netlify.app/">
+<meta property="og:title" content="Summa — Try It">
+<meta property="og:description" content="Two quick number puzzles. Arrange the numbers to reach the target.">
+<meta property="og:url" content="https://playsumma.netlify.app/intro">
 <meta property="og:image" content="https://playsumma.netlify.app/og-preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Summa — Daily Puzzle">
-<meta name="twitter:description" content="Arrange the numbers to reach the target. A new free puzzle every day.">
+<meta name="twitter:title" content="Summa — Try It">
+<meta name="twitter:description" content="Two quick number puzzles. Arrange the numbers to reach the target.">
 <meta name="twitter:image" content="https://playsumma.netlify.app/og-preview.png">
 <meta name="theme-color" content="#EDE3D2">
 
@@ -64,9 +64,6 @@
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 [hidden]{display:none!important;}
-/* When restoring an already-solved board on load, suppress every transition/animation for one
-   frame so the solved state paints instantly (no pool flash, no replayed solve animation). */
-#board.instant *{transition:none!important;animation:none!important;}
 html,body{margin:0;height:100%;}
 body{
   background:var(--paper);
@@ -229,7 +226,7 @@ header{
 .bottom .play-controls{transition:opacity .25s;}
 .bottom.solved .play-controls{opacity:0;pointer-events:none;}
 
-/* ---- Success card ---- */
+/* ---- Success / conversion card ---- */
 .success{
   position:absolute;left:0;right:0;bottom:12px;
   opacity:0;transform:translateY(18px);transition:opacity .4s ease-out,transform .4s ease-out;
@@ -237,18 +234,9 @@ header{
 }
 .success.show{opacity:1;transform:translateY(0);pointer-events:auto;}
 .success .headline{text-align:center;}
-.success .headline .h{font-family:var(--brand);font-size:17px;font-weight:500;letter-spacing:.3px;color:var(--ink);}
-.success .headline .sub{font-family:var(--brand);font-size:13px;color:var(--ink-light);margin-top:5px;}
-.success .time{font-family:var(--brand);font-size:15px;font-weight:500;color:var(--ink-mid);margin-top:6px;}
-.cta-share{
-  margin-top:20px;width:100%;height:52px;border-radius:26px;
-  background:linear-gradient(to bottom,var(--accent),var(--accent-deep));
-  color:var(--paper-lift);font-family:var(--brand);font-size:16px;font-weight:500;letter-spacing:.4px;
-  box-shadow:0 6px 16px rgba(80,55,25,.28),0 1px 3px rgba(80,55,25,.14);
-  display:flex;align-items:center;justify-content:center;gap:8px;
-}
-.cta-share svg{width:17px;height:17px;}
-.stores{display:flex;gap:12px;margin-top:14px;}
+.success .headline .h{font-family:var(--brand);font-size:19px;font-weight:600;letter-spacing:.3px;color:var(--ink);}
+.success .headline .sub{font-family:var(--brand);font-size:13.5px;color:var(--ink-light);line-height:1.45;margin:7px 4px 0;}
+.stores{display:flex;gap:12px;margin-top:20px;}
 .store-btn{
   flex:1;height:52px;border-radius:14px;
   background:var(--ink);color:var(--cream);
@@ -261,6 +249,11 @@ header{
 .store-btn .st small{font-size:9px;opacity:.8;font-family:var(--brand);letter-spacing:.3px;}
 .store-btn .st b{font-size:15px;font-weight:600;font-family:var(--brand);}
 .store-btn.soon{opacity:.85;}
+.cta-secondary{
+  display:block;width:100%;margin-top:14px;padding:11px;
+  font-family:var(--brand);font-size:15px;color:var(--ink-light);
+  text-align:center;text-decoration:none;
+}
 
 /* ---- Helper hint (empty board only) ---- */
 .hint-line{
@@ -306,10 +299,8 @@ header{
 @keyframes fadeIn{to{opacity:1;}}
 @keyframes popIn{from{opacity:0;transform:scale(.94) translateY(8px);}to{opacity:1;transform:none;}}
 
-/* ---- Post-solve "get the app" pitch ---- */
+/* ---- Post-completion "get the app" pitch (same as the daily's) ---- */
 #pitchModal{z-index:160;}
-/* While arming (first ~0.5s) the card can't be tapped, so a stray tap meant for something
-   else doesn't hit a button. The overlay still blocks the board underneath. */
 #pitchModal.arming .modal-card{pointer-events:none;}
 .pitch-card{max-width:384px;text-align:left;max-height:90dvh;overflow-y:auto;}
 .pitch-head{text-align:center;font-family:var(--brand);font-size:22px;font-weight:600;color:var(--ink);}
@@ -340,19 +331,6 @@ header{
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* ---- Loading / error ---- */
-.center-msg{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-  text-align:center;color:var(--ink-light);font-family:var(--brand);
-}
-.center-msg .spin{width:34px;height:34px;border-radius:50%;
-  border:3px solid rgba(122,82,48,.2);border-top-color:var(--accent);animation:spin 1s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg)}}
-.center-msg button{
-  padding:10px 22px;border-radius:22px;background:var(--accent);color:var(--paper-lift);
-  font-size:15px;font-weight:500;
-}
-
 @media (prefers-reduced-motion: reduce){
   *{animation-duration:.01ms!important;transition-duration:.08s!important;}
 }
@@ -365,15 +343,15 @@ header{
       <span class="logo-mark"><span>&#931;</span></span>
     </span>
     <div class="header-title">
-      <div class="eyebrow">Daily</div>
-      <div class="date" id="dateLabel">&nbsp;</div>
+      <div class="eyebrow">Try Summa</div>
+      <div class="date" id="stepLabel">&nbsp;</div>
     </div>
     <div class="header-right">
-      <a class="hbtn" id="introBtn" href="intro.html" aria-label="Intro puzzles">
+      <a class="hbtn" id="dailyBtn" href="index.html" aria-label="Today's daily puzzle">
         <span class="icon-btn">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 6.8C10.4 5.6 8.4 5 6 5c-1 0-1.9.1-2.7.3-.4.1-.8.5-.8 1v10.7c0 .6.6 1.1 1.2.9.7-.2 1.5-.3 2.3-.3 2.2 0 4.1.7 5.4 1.9V6.8z"/><path d="M12 6.8C13.6 5.6 15.6 5 18 5c1 0 1.9.1 2.7.3.4.1.8.5.8 1v10.7c0 .6-.6 1.1-1.2.9-.7-.2-1.5-.3-2.3-.3-2.2 0-4.1.7-5.4 1.9V6.8z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4.2"/><g stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="2.4" x2="12" y2="4.9"/><line x1="12" y1="19.1" x2="12" y2="21.6"/><line x1="2.4" y1="12" x2="4.9" y2="12"/><line x1="19.1" y1="12" x2="21.6" y2="12"/><line x1="5.1" y1="5.1" x2="6.9" y2="6.9"/><line x1="17.1" y1="17.1" x2="18.9" y2="18.9"/><line x1="5.1" y1="18.9" x2="6.9" y2="17.1"/><line x1="17.1" y1="6.9" x2="18.9" y2="5.1"/></g></svg>
         </span>
-        <span class="hbtn-label">Intro</span>
+        <span class="hbtn-label">Daily</span>
       </a>
       <div class="hbtn" id="hintCtl" hidden>
         <button class="icon-btn" id="hintBtn" aria-label="Get a hint">
@@ -384,7 +362,7 @@ header{
     </div>
   </header>
 
-  <div id="board" hidden>
+  <div id="board">
     <div class="target">
       <div class="reach">REACH</div>
       <div class="value" id="targetValue">0</div>
@@ -414,14 +392,9 @@ header{
 
       <div class="success" id="success">
         <div class="headline">
-          <div class="h" id="successH">Daily puzzle solved</div>
-          <div class="sub">Come back tomorrow or download the app for more.</div>
-          <div class="time" id="successTime"></div>
+          <div class="h" id="successH">Nice, that was a medium one</div>
+          <div class="sub">The app has puzzles for every level, quick timed rounds, and a fresh daily.</div>
         </div>
-        <button class="cta-share" id="shareBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-          Share result
-        </button>
         <div class="stores">
           <a class="store-btn js-appstore" href="#" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.9c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.4 2 .9 0 1.3-.6 2.4-.6 1.1 0 1.4.6 2.4.6 1 0 1.6-.9 2.3-1.9.7-1.1 1-2.1 1-2.2 0 0-1.9-.7-1.9-3zm-2-5.6c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.1-.5.5-.9 1.4-.8 2.3.9.1 1.8-.4 2.2-1z"/></svg>
@@ -432,14 +405,9 @@ header{
             <span class="st"><small>Get it on</small><b>Google Play</b></span>
           </button>
         </div>
+        <a class="cta-secondary" id="tryDaily" href="index.html">Try today's daily instead</a>
       </div>
     </div>
-  </div>
-
-  <div class="center-msg" id="loading"><div class="spin"></div><div>Loading today's puzzle…</div></div>
-  <div class="center-msg" id="error" hidden>
-    <div>Today's puzzle isn't available yet.</div>
-    <button id="retryBtn">Try again</button>
   </div>
 </div>
 
@@ -506,38 +474,24 @@ header{
 
 <script>
 /* ======================================================================
-   Summa — Daily web puzzle
-   Faithful port of the app's daily board: identical PEMDAS evaluation,
-   identical expression layout, identical placement/drag rules.
+   Summa — Intro / onboarding funnel (Funnel B)
+   A guaranteed-win puzzle, then an easier medium, then the app pitch.
+   Reuses the daily board engine verbatim (PEMDAS eval, layout, drag/tap).
    ====================================================================== */
 "use strict";
 
 const CONFIG = {
-  // Where the daily-window JSON files live (published by the FOURmula GitHub Action),
-  // relative to this page — the daily folder sits alongside index.html.
-  dataPath: "daily/",
-  // day_number of "Daily #1". Currently set to 2026-09-14. Change to your public launch day
-  // so the shared "#N" counts from launch. (day_number = days since 1970-01-01 US-Pacific.)
-  dailyEpochDayNumber: 20710,
-  storeUrls: {
-    appStore: "https://apps.apple.com/app/id6790951155",
-  },
-  shareUrl: location.origin + location.pathname,
+  storeUrls: { appStore: "https://apps.apple.com/app/id6790951155" },
 };
 
-/* -------------------- Pacific date (matches the app's calendar) -------------------- */
-function pacificDateISO(d = new Date()){
-  // "en-CA" formats as YYYY-MM-DD; timeZone pins it to US-Pacific like RushCalendar.
-  return new Intl.DateTimeFormat("en-CA",{timeZone:"America/Los_Angeles",
-    year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
-}
-function shortDateLabel(iso){
-  const [y,m,dd] = iso.split("-").map(Number);
-  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return months[m-1] + " " + dd;                     // "Sep 14", matching DailyPuzzleState.dateLabel
-}
+// The two-step ramp. #1 is a guaranteed win; #2 is a gentle medium
+// (_ × _ − _ + _ = 4 with {2,3,4,6}, e.g. 2×3−6+4).
+const PUZZLES = [
+  { availableNumbers:[1,2,3],   operators:["+","-"],     target:2 },
+  { availableNumbers:[2,3,4,6], operators:["*","-","+"], target:4 },
+];
 
-/* -------------------- Math (single source of truth, mirrors PuzzleMath.swift) -------------------- */
+/* -------------------- Math (mirrors PuzzleMath.swift) -------------------- */
 function evaluate(numbers, operators){
   if(numbers.length===0 || operators.length !== numbers.length-1) return null;
   const vals=numbers.slice(), ops=operators.slice();
@@ -554,35 +508,32 @@ function evaluate(numbers, operators){
   return r;
 }
 function matches(a,b){ return Math.round(a*1000)===Math.round(b*1000); }
-function valueString(n){
-  // 0..2 fraction digits, with thousands separators — mirrors Float.valueString.
-  return Number(n).toLocaleString("en-US",{maximumFractionDigits:2});
-}
+function valueString(n){ return Number(n).toLocaleString("en-US",{maximumFractionDigits:2}); }
 
 /* -------------------- State -------------------- */
-let CFG=null;                 // {availableNumbers, operators, target, number, date, N}
-let placements=[];            // length = slotCount; each entry = pool index or null
+let CFG=null;
+let placements=[];
 let slotCount=0;
 let clearCount=0;
 let startedAt=0;
 let solved=false;
 let sawWrong=false;
-const tiles=[];               // tiles[i] = DOM element for pool index i
-let poolCells=[];             // poolCells[i]
-let wells=[];                 // wells[slot]
+let puzzleIndex=0;
+let sessionStart=Date.now();
+const tiles=[];
+let poolCells=[];
+let wells=[];
 
 /* -------------------- DOM -------------------- */
 const $ = id => document.getElementById(id);
 const els={};
-["dateLabel","targetValue","expr","result","wrongLine","wrongEq","okLine","okEq",
- "pool","bottom","clearBtn","success","successTime","shareBtn","hintBtn","hintCtl",
- "board","loading","error","retryBtn","toast","hintLine","hintModal","hintModalClose",
- "pitchModal","pitchClose"]
+["stepLabel","targetValue","expr","result","wrongLine","wrongEq","okLine","okEq",
+ "pool","bottom","clearBtn","success","successH","hintBtn","hintCtl","board","toast","hintLine",
+ "hintModal","hintModalClose","tryDaily","pitchModal","pitchClose"]
  .forEach(k=>els[k]=$(k));
 
 /* -------------------- Operator glyph (mirrors OperatorSymbolView) -------------------- */
 function opSVG(op){
-  // viewBox 32x78, centered; formulas match the app's Canvas drawing (scaled from 32-wide frame).
   const W=32,H=78,cx=16,cy=39;
   const e=W*0.225, es=e*0.82, lw=Math.max(1.5,W*0.075), dotR=lw*1.1, col="#5C4A36";
   const line=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${lw}" stroke-linecap="round"/>`;
@@ -595,7 +546,7 @@ function opSVG(op){
   return `<svg viewBox="0 0 ${W} ${H}">${inner}</svg>`;
 }
 
-/* -------------------- Build the expression scaffold (mirrors ExpressionView.layoutItems) -------------------- */
+/* -------------------- Build the expression scaffold -------------------- */
 function buildExpression(){
   els.expr.innerHTML="";
   wells=new Array(slotCount).fill(null);
@@ -626,7 +577,7 @@ function buildExpression(){
   }
 }
 
-/* -------------------- Build the number pool (rows of <=4, balanced) -------------------- */
+/* -------------------- Build the number pool -------------------- */
 function buildPool(){
   els.pool.innerHTML="";
   poolCells=[];
@@ -657,7 +608,7 @@ function buildTiles(){
   }
 }
 
-/* -------------------- FLIP helper: glide tiles when they change home -------------------- */
+/* -------------------- FLIP helper -------------------- */
 function flip(mutate){
   const first=tiles.map(t=>t.getBoundingClientRect());
   mutate();
@@ -668,14 +619,14 @@ function flip(mutate){
     if(dx||dy){
       t.style.transition="none";
       t.style.transform=`translate(${dx}px,${dy}px)`;
-      t.getBoundingClientRect();               // force reflow
+      t.getBoundingClientRect();
       t.style.transition="";
       t.style.transform="";
     }
   });
 }
 
-/* -------------------- Placement primitives (mirror GameplayState mutations) -------------------- */
+/* -------------------- Placement primitives -------------------- */
 function placeInFirstEmpty(poolIdx){
   const slot=placements.findIndex(p=>p===null);
   if(slot===-1) return false;
@@ -683,7 +634,7 @@ function placeInFirstEmpty(poolIdx){
 }
 function dropInSlot(poolIdx,slot){
   if(slot<0||slot>=slotCount) return false;
-  if(placements.includes(poolIdx)) return false;   // already placed elsewhere
+  if(placements.includes(poolIdx)) return false;
   placements[slot]=poolIdx; return true;
 }
 function moveTile(fromSlot,toSlot){
@@ -692,7 +643,7 @@ function moveTile(fromSlot,toSlot){
     if(toSlot===fromSlot) return false;
     const tmp=placements[fromSlot]; placements[fromSlot]=placements[toSlot]; placements[toSlot]=tmp;
   } else {
-    placements[fromSlot]=null;                       // dropped off any slot → back to pool
+    placements[fromSlot]=null;
   }
   return true;
 }
@@ -703,7 +654,7 @@ function clearAll(){
   return any;
 }
 
-/* -------------------- Render: reparent tiles to homes, apply states -------------------- */
+/* -------------------- Render -------------------- */
 function render(animate=true){
   const apply=()=>{
     for(let i=0;i<tiles.length;i++){
@@ -731,27 +682,24 @@ function updateStates(){
   els.wrongLine.classList.toggle("show", isWrong);
   if(isWrong){ els.wrongEq.textContent="= "+valueString(res); }
 
-  // hide the helper hint after the first placement
   const anyPlaced = placements.some(p=>p!==null);
   els.hintLine.classList.toggle("hide", anyPlaced);
 
   if(isWrong && !sawWrong){ sawWrong=true; }
 
-  if(isSolved && !solved){ onSolved(); }
+  if(isSolved && !solved){ onSolvedStep(); }
 }
 
-/* -------------------- Solve -------------------- */
-function onSolved(){
+/* -------------------- Solve one step -------------------- */
+function onSolvedStep(){
   solved=true;
-  els.hintCtl.hidden=true;              // no hints once it's solved
-  const timeMs = Date.now()-startedAt;
-  persistSolved(timeMs);
+  els.hintCtl.hidden=true;
+  const timeMs=Date.now()-startedAt;
 
   els.okEq.textContent="= "+valueString(CFG.target);
   els.bottom.classList.add("solved");
 
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // tiles → green, staggered pop
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
   tiles.forEach((t,k)=>{
     const slot=placements.indexOf(k);
     if(slot===-1) return;
@@ -760,61 +708,22 @@ function onSolved(){
       reduce?0:(360+slot*70));
   });
   setTimeout(()=>els.okLine.classList.add("show"), reduce?60:520);
-  setTimeout(()=>{ els.success.classList.add("show"); }, reduce?120:620);
 
-  showSuccessTime(timeMs);
-  log("web_daily_solved",{puzzle_number:CFG.N, puzzle_date:CFG.date,
-      time_to_solve_ms:timeMs, num_clears:clearCount, saw_wrong:sawWrong});
+  log("web_intro_step_solved",{step:puzzleIndex+1, time_to_solve_ms:timeMs,
+      num_clears:clearCount, saw_wrong:sawWrong});
 
-  // A moment after the celebration, pitch the full app (only on a fresh solve, not on reload).
-  setTimeout(showPitch, 2500);
-}
-function showSuccessTime(ms){
-  const s=Math.round(ms/1000), m=Math.floor(s/60), r=s%60;
-  els.successTime.textContent="Solved in "+ (m>0 ? `${m}:${String(r).padStart(2,"0")}` : `${r}s`);
-}
-
-/* -------------------- Restore an already-solved day -------------------- */
-function firstSolution(){
-  // brute-force one valid placement (ordered pick of slotCount distinct pool numbers)
-  const nums=CFG.availableNumbers, n=nums.length, target=CFG.target, ops=CFG.operators;
-  const chosen=[]; const used=new Array(n).fill(false);
-  let found=null;
-  (function search(){
-    if(found) return;
-    if(chosen.length===slotCount){
-      const r=evaluate(chosen.map(i=>nums[i]),ops);
-      if(r!==null && matches(r,target)) found=chosen.slice();
-      return;
-    }
-    for(let i=0;i<n && !found;i++){ if(used[i]) continue; used[i]=true; chosen.push(i);
-      search(); chosen.pop(); used[i]=false; }
-  })();
-  return found;
-}
-function restoreSolved(timeMs){
-  // Mark solved BEFORE render() — otherwise render()'s updateStates() sees a filled+correct board
-  // with solved still false and re-fires onSolved(), which overwrites the saved time with ~0 (the
-  // timer just reset on load) and re-triggers the pitch on every reload.
-  solved=true;
-  els.hintCtl.hidden=true;
-  // Paint the already-solved state with no transitions so the pool doesn't flash before it hides
-  // and the solve animation doesn't replay on reload.
-  els.board.classList.add("instant");
-  const sol=firstSolution();
-  if(sol) for(let s=0;s<slotCount;s++) placements[s]=sol[s];
-  render(false);
-  els.okEq.textContent="= "+valueString(CFG.target);
-  els.bottom.classList.add("solved");
-  tiles.forEach(t=>{ if(placements.includes(+t.dataset.pool)) t.classList.add("correct"); });
-  els.okLine.classList.add("show");
-  els.success.classList.add("show");
-  if(typeof timeMs==="number") showSuccessTime(timeMs);
-  void els.board.offsetWidth;                                    // flush the styles above instantly
-  setTimeout(()=>els.board.classList.remove("instant"), 50);     // timer fires even in a hidden tab
+  const isLast = puzzleIndex >= PUZZLES.length-1;
+  if(isLast){
+    setTimeout(()=>els.success.classList.add("show"), reduce?140:640);
+    setTimeout(showPitch, 2500);   // same once-per-72h app pitch the daily shows
+    log("web_intro_completed",{total_time_ms:Date.now()-sessionStart});
+  } else {
+    setTimeout(()=>toast("Nice! Now a slightly trickier one."), reduce?140:660);
+    setTimeout(()=>startPuzzle(puzzleIndex+1), reduce?450:1600);
+  }
 }
 
-/* -------------------- Interactions (tap + pointer drag) -------------------- */
+/* -------------------- Interactions -------------------- */
 const SNAP=55;
 function nearestSlot(x,y){
   let best=null;
@@ -845,7 +754,6 @@ function attachTileHandlers(tile,index){
       dragging=true; moved=true; tile.classList.add("dragging");
     }
     if(dragging){
-      // position tile centre under the finger, relative to its current home
       const home=tile.parentElement.getBoundingClientRect();
       const tx=(e.clientX-offX)-(home.left+home.width/2);
       const ty=(e.clientY-offY)-(home.top+home.height/2);
@@ -864,10 +772,8 @@ function attachTileHandlers(tile,index){
     tile.style.transform="";
     const slot=placements.indexOf(index);
     const target=nearestSlot(e.clientX,e.clientY);
-    let changed=false;
-    if(slot!==-1){ changed=moveTile(slot,target); }             // placed tile
-    else if(target!==null){ changed=dropInSlot(index,target); } // pool tile onto slot
-    // else: pool tile in open space → just settle home
+    if(slot!==-1){ moveTile(slot,target); }
+    else if(target!==null){ dropInSlot(index,target); }
     dragging=false;
     render(true);
   };
@@ -877,8 +783,8 @@ function attachTileHandlers(tile,index){
 function tap(index){
   if(solved) return;
   const slot=placements.indexOf(index);
-  if(slot!==-1) placements[slot]=null;   // placed → back to pool
-  else placeInFirstEmpty(index);          // pool → first empty
+  if(slot!==-1) placements[slot]=null;
+  else placeInFirstEmpty(index);
   render(true);
 }
 
@@ -893,30 +799,6 @@ function fitExpression(){
   }
 }
 
-/* -------------------- Persistence (solved-today only) -------------------- */
-function storeKey(){ return "summa_daily_"+CFG.date; }
-function persistSolved(timeMs){
-  try{ localStorage.setItem(storeKey(), JSON.stringify({solved:true,timeMs,ts:Date.now()})); }catch(_){}
-}
-function loadSolved(){
-  try{ const v=localStorage.getItem(storeKey()); return v?JSON.parse(v):null; }catch(_){ return null; }
-}
-
-/* -------------------- Share -------------------- */
-function buildShareText(){
-  const t=els.successTime.textContent || "Solved";
-  return `Summa Daily #${CFG.N} · ${shortDateLabel(CFG.date)}\n${t} ✅\nPlay free: ${CONFIG.shareUrl}`;
-}
-async function doShare(){
-  const text=buildShareText();
-  log("web_share_click",{puzzle_number:CFG.N, method:(navigator.share?"native":"clipboard")});
-  if(navigator.share){
-    try{ await navigator.share({title:"Summa Daily", text}); return; }catch(_){ /* fall through */ }
-  }
-  try{ await navigator.clipboard.writeText(text); toast("Result copied — paste it anywhere!"); }
-  catch(_){ toast("Couldn't copy on this browser"); }
-}
-
 /* -------------------- Toast -------------------- */
 let toastTimer=null;
 function toast(msg){
@@ -928,70 +810,56 @@ function toast(msg){
 window.summaLogQueue=window.summaLogQueue||[];
 function log(name,params){ (window.summaLog||((n,p)=>window.summaLogQueue.push([n,p])))(name,params); }
 
-/* -------------------- Boot -------------------- */
-async function loadDaily(){
-  els.error.hidden=true; els.loading.hidden=false; els.board.hidden=true;
-  const date=pacificDateISO();
-  try{
-    const res=await fetch(CONFIG.dataPath+date+".json",{cache:"no-cache"});
-    if(!res.ok) throw new Error("not found");
-    const data=await res.json();
-    CFG={
-      availableNumbers:data.available_numbers,
-      operators:data.operators,
-      target:data.target_result,
-      number:data.number,
-      date:data.date,
-      N:(data.day_number - CONFIG.dailyEpochDayNumber) + 1,
-    };
-    startGame();
-  }catch(err){
-    els.loading.hidden=true; els.error.hidden=false;
-  }
-}
-
-function startGame(){
+/* -------------------- Start a puzzle step -------------------- */
+function startPuzzle(idx){
+  puzzleIndex=idx;
+  const p=PUZZLES[idx];
+  CFG={ availableNumbers:p.availableNumbers.slice(), operators:p.operators.slice(), target:p.target };
   slotCount=CFG.operators.length+1;
   placements=new Array(slotCount).fill(null);
   clearCount=0; solved=false; sawWrong=false; startedAt=Date.now();
 
-  els.dateLabel.textContent=shortDateLabel(CFG.date);
+  els.bottom.classList.remove("solved");
+  els.success.classList.remove("show");
+  els.okLine.classList.remove("show");
+  els.wrongLine.classList.remove("show");
+  els.hintLine.classList.remove("hide");
+
+  els.stepLabel.textContent=`Puzzle ${idx+1} of ${PUZZLES.length}`;
   els.targetValue.textContent=valueString(CFG.target);
   document.querySelectorAll(".js-appstore").forEach(a=>a.href=CONFIG.storeUrls.appStore);
 
   buildExpression(); buildPool(); buildTiles();
-  els.loading.hidden=true; els.board.hidden=false; els.hintCtl.hidden=false;
+  els.hintCtl.hidden=false;
   fitExpression();
+  render(false);
 
-  const prev=loadSolved();
-  if(prev && prev.solved){ restoreSolved(prev.timeMs); }
-  else { render(false); }
-
-  log("web_daily_view",{puzzle_number:CFG.N, puzzle_date:CFG.date, already_solved:!!(prev&&prev.solved)});
+  log("web_intro_view",{step:idx+1});
 }
 
 /* -------------------- Wire up -------------------- */
 els.clearBtn.addEventListener("click",()=>{ if(solved) return; if(clearAll()) render(true); });
-els.shareBtn.addEventListener("click",doShare);
-els.retryBtn.addEventListener("click",loadDaily);
 
-// Hint button (top-right) → "download the app" modal.
-function openHintModal(){ els.hintModal.hidden=false; log("web_hint_tapped",{puzzle_number:CFG?CFG.N:null}); }
+function openHintModal(){ els.hintModal.hidden=false; log("web_hint_tapped",{step:puzzleIndex+1, funnel:"intro"}); }
 function closeHintModal(){ els.hintModal.hidden=true; }
 els.hintBtn.addEventListener("click",openHintModal);
 els.hintModalClose.addEventListener("click",closeHintModal);
-
-// "Simpler puzzles" button → the intro/onboarding funnel (a guaranteed win, then an easier
-// medium, then the app pitch). Best-effort log fires before the same-origin navigation.
-const introBtnEl=$("introBtn");
-if(introBtnEl) introBtnEl.addEventListener("click",()=>log("web_intro_from_daily",{puzzle_number:CFG?CFG.N:null}));
 els.hintModal.addEventListener("click",e=>{ if(e.target===els.hintModal) closeHintModal(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !els.hintModal.hidden) closeHintModal(); });
 
-// Post-solve app pitch. Shows once, ~2.5s after solving. Deliberately NOT dismissible by tapping
-// the backdrop, and its buttons are inert for the first 0.5s so an in-flight tap can't hit them.
+document.querySelectorAll(".js-appstore").forEach(a=>a.addEventListener("click",()=>log("web_store_click",{store:"app_store", funnel:"intro"})));
+document.querySelectorAll(".js-play").forEach(b=>b.addEventListener("click",e=>{ e.preventDefault(); log("web_store_click",{store:"google_play", funnel:"intro"}); toast("Coming soon!"); }));
+els.tryDaily.addEventListener("click",()=>log("web_intro_try_daily",{}));
+
+// Header "Daily" button → back to the daily, for a curious daily-player who tapped Intro.
+const dailyBtnEl=document.getElementById("dailyBtn");
+if(dailyBtnEl) dailyBtnEl.addEventListener("click",()=>log("web_intro_to_daily",{step:puzzleIndex+1}));
+
+// Post-completion app pitch — the same popup the daily shows, once per 72h, on a SHARED cooldown
+// (localStorage "summa_pitch_last") so a user never sees it twice within the window across funnels.
+// Deliberately not dismissible by tapping the backdrop; buttons inert for the first 0.5s.
 let pitchShown=false;
-const PITCH_COOLDOWN_MS=72*60*60*1000;   // don't show the pitch more than once per 72h
+const PITCH_COOLDOWN_MS=72*60*60*1000;
 function showPitch(){
   if(pitchShown || !solved) return;
   let last=0; try{ last=parseInt(localStorage.getItem("summa_pitch_last")||"0",10)||0; }catch(_){}
@@ -1001,7 +869,7 @@ function showPitch(){
   els.pitchModal.hidden=false;
   els.pitchModal.classList.add("arming");
   setTimeout(()=>els.pitchModal.classList.remove("arming"), 500);
-  log("web_pitch_shown",{puzzle_number:CFG?CFG.N:null});
+  log("web_pitch_shown",{funnel:"intro"});
 }
 function closePitch(){ els.pitchModal.hidden=true; }
 els.pitchClose.addEventListener("click",closePitch);
@@ -1009,19 +877,13 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape" && !els.pitchModal.hidden && !els.pitchModal.classList.contains("arming")) closePitch();
 });
 
-// Store buttons appear in both the success card and the hint modal — wire them all.
-document.querySelectorAll(".js-appstore").forEach(a=>a.addEventListener("click",()=>log("web_store_click",{store:"app_store"})));
-document.querySelectorAll(".js-play").forEach(b=>b.addEventListener("click",e=>{ e.preventDefault(); log("web_store_click",{store:"google_play"}); toast("Coming soon!"); }));
-
 window.addEventListener("resize",()=>{ if(CFG){ fitExpression(); render(false); } });
 
-loadDaily();
+startPuzzle(0);
 </script>
 
-<!-- Firebase Analytics (loads independently; never blocks the game). -->
+<!-- Firebase Analytics (loads independently; never blocks the game). Same project as the daily. -->
 <script type="module">
-  // Paste your Web app config here: Firebase console → Project settings → Your apps → Web (</>).
-  // appId + measurementId are Web-specific; the game runs fine until you fill them in.
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyCiKKBQIK4esJUsDq8N99vOoixlfQ7TLKo",
     authDomain: "summa-94cbd.firebaseapp.com",
@@ -1029,7 +891,7 @@ loadDaily();
     storageBucket: "summa-94cbd.firebasestorage.app",
     messagingSenderId: "848189543790",
     appId: "1:848189543790:web:91728c8c059fdbe1e21d7f",
-    measurementId: "G-3XTY2F9DHC",   // must start with "G-" to enable analytics
+    measurementId: "G-3XTY2F9DHC",
   };
   // Skip analytics on local dev (localhost, *.local, or a private/Wi-Fi IP — e.g. phone testing over
   // the LAN) so test plays never pollute the real data. Live public domains keep analytics on.
@@ -1047,7 +909,6 @@ loadDaily();
       window.summaLogQueue=[];
     }catch(e){ console.warn("Summa analytics unavailable:",e); }
   } else {
-    console.info(IS_LOCAL ? "Summa analytics off (local dev)." : "Summa analytics not configured.");
     window.summaLog=(n,p)=>console.debug("[analytics]",n,p||{});
     (window.summaLogQueue||[]).forEach(([n,p])=>window.summaLog(n,p));
   }
