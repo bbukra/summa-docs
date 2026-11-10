@@ -1,0 +1,2 @@
+# Serve the Versus invite receiver for any /vs/<CODE> link (rewrite, keep the URL; 200 not 301).
+/vs/*   /vs/index.html   200

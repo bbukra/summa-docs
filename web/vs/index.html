@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Summa — Versus Invite</title>
+<meta name="description" content="A friend challenged you to a head-to-head Summa match. Get the app and join with their invite code.">
+<link rel="canonical" href="https://playsumma.netlify.app/vs/">
+
+<!-- Rich link preview -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Summa">
+<meta property="og:title" content="You've been challenged to Summa Versus">
+<meta property="og:description" content="Tap to join a head-to-head match. Same puzzles, one shared clock — fastest solver wins.">
+<meta property="og:url" content="https://playsumma.netlify.app/vs/">
+<meta property="og:image" content="https://playsumma.netlify.app/og-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="You've been challenged to Summa Versus">
+<meta name="twitter:description" content="Tap to join a head-to-head match. Fastest solver wins.">
+<meta name="twitter:image" content="https://playsumma.netlify.app/og-preview.png">
+<meta name="theme-color" content="#EDE3D2">
+
+<link rel="preload" href="/fonts/summa-numbers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/summa-logo.woff2" as="font" type="font/woff2" crossorigin>
+
+<style>
+/* ============================ Fonts ============================ */
+@font-face{
+  font-family:"SummaNumbers";
+  src:url("/fonts/summa-numbers.woff2") format("woff2");
+  font-weight:600; font-display:swap;
+}
+@font-face{
+  font-family:"SummaLogo";
+  src:url("/fonts/summa-logo.woff2") format("woff2");
+  font-weight:600; font-display:swap;
+}
+
+/* ============================ Design tokens (mirror Colors.swift) ============================ */
+:root{
+  --paper:#EDE3D2; --paper-deep:#E4D8C2; --paper-lift:#F4ECDC;
+  --tile:#D9B98A; --tile-deep:#C9A472;
+  --ink:#3A2D1F; --ink-mid:#5C4A36; --ink-light:#7C6748; --ink-muted:#A9947A;
+  --accent:#7A5230; --accent-deep:#5E3D22; --accent-deepest:#4A2F18;
+  --gold:#BF8C2C;
+  --cream:#FFFAF0; --umber:#3C280F; --shadow:#503719;
+
+  --brand:ui-serif,"New York",Georgia,"Times New Roman",serif;
+  --numbers:"SummaNumbers",ui-serif,Georgia,serif;
+  --logo:"SummaLogo",ui-serif,Georgia,serif;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  min-height:100svh;
+  font-family:var(--brand);
+  color:var(--ink);
+  background:
+    radial-gradient(120% 90% at 50% 28%, var(--paper-lift) 0%, var(--paper) 46%, var(--paper-deep) 100%);
+  display:flex; align-items:center; justify-content:center;
+  padding:max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+}
+
+.card{
+  width:100%; max-width:380px;
+  text-align:center;
+}
+
+/* Σ seal */
+.seal{
+  width:92px; height:92px; margin:0 auto 22px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(180deg, var(--accent) 0%, var(--accent-deepest) 100%);
+  border:2px solid rgba(191,140,44,0.55);
+  box-shadow:0 10px 24px rgba(74,47,24,0.35), inset 0 2px 4px rgba(255,250,240,0.18);
+}
+.seal span{
+  font-family:var(--logo); font-size:52px; line-height:1;
+  color:var(--cream);
+  transform:translateY(2px);
+}
+
+.eyebrow{
+  display:inline-block;
+  font-size:12.5px; letter-spacing:1.8px; font-weight:600;
+  color:var(--cream);
+  padding:6px 14px; border-radius:999px;
+  background:linear-gradient(180deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border:1px solid rgba(191,140,44,0.55);
+  box-shadow:0 2px 5px rgba(80,55,25,0.22);
+  margin-bottom:16px;
+}
+
+h1{
+  font-size:30px; line-height:1.2; margin:0 0 10px;
+  font-weight:600; color:var(--ink);
+}
+.sub{
+  font-size:16px; line-height:1.5; margin:0 0 26px;
+  color:var(--ink-mid);
+}
+
+/* Code tiles */
+.code{
+  display:flex; gap:9px; justify-content:center; margin:0 0 30px;
+}
+.code .t{
+  width:46px; height:58px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--numbers); font-size:28px; color:var(--ink);
+  background:linear-gradient(180deg, var(--tile) 0%, var(--tile-deep) 100%);
+  border-radius:11px;
+  border:1px solid rgba(60,40,15,0.18);
+  box-shadow:0 4px 10px rgba(80,55,25,0.16), inset 0 1px 2px rgba(255,250,240,0.4);
+}
+
+/* Buttons */
+.btn{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; height:58px; margin:0 0 12px;
+  font-family:var(--brand); font-size:18px; font-weight:600; letter-spacing:0.3px;
+  border-radius:999px; text-decoration:none; cursor:pointer; border:none;
+}
+.btn-primary{
+  color:var(--cream);
+  background:linear-gradient(180deg, #8C6038 0%, var(--accent) 50%, var(--accent-deepest) 100%);
+  border:1.5px solid rgba(191,140,44,0.5);
+  box-shadow:0 8px 20px rgba(74,47,24,0.3), 0 0 10px rgba(191,140,44,0.2);
+}
+.btn-secondary{
+  color:var(--ink);
+  background:linear-gradient(180deg, #DCC49B 0%, #C6A876 100%);
+  border:1px solid rgba(255,250,240,0.18);
+  box-shadow:0 10px 14px rgba(80,55,25,0.14);
+}
+.btn:active{transform:translateY(1px);}
+
+.foot{
+  margin-top:20px; font-size:13.5px; color:var(--ink-light);
+}
+.foot a{color:var(--accent); text-decoration:none; font-weight:600;}
+
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="seal"><span>Σ</span></div>
+
+  <!-- Valid-invite view -->
+  <div id="invite">
+    <div class="eyebrow">VERSUS CHALLENGE</div>
+    <h1>A friend challenged you</h1>
+    <p class="sub">Same puzzles, one shared clock — the fastest solver wins. Get Summa to join their match.</p>
+    <div class="code" id="codeTiles" aria-label="Match code"></div>
+    <a class="btn btn-primary js-appstore" id="getBtn" href="#">Get Summa — Free</a>
+    <button class="btn btn-secondary" id="openBtn">Already have Summa? Open it</button>
+    <p class="foot">Match code <strong id="codeText"></strong> — enter it in <em>Multiplayer → Join by code</em> if the button doesn't open the app.</p>
+  </div>
+
+  <!-- No/invalid code view -->
+  <div id="noCode" class="hidden">
+    <div class="eyebrow">SUMMA VERSUS</div>
+    <h1>Play head-to-head</h1>
+    <p class="sub">This invite link is missing its match code. Get Summa and ask your friend to re-send their invite, or play the free daily puzzle.</p>
+    <a class="btn btn-primary js-appstore" href="#">Get Summa — Free</a>
+    <p class="foot"><a href="/">Play the free daily puzzle →</a></p>
+  </div>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var APP_STORE_URL = "https://apps.apple.com/app/id6790951155";
+  // Match-code alphabet from the app (no ambiguous 0/O/1/I); codes are 5 chars.
+  var ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  var CODE_LEN = 5;
+
+  // Analytics shim: mirrors the game page. Queue until firebase (loaded below) defines window.summaLog.
+  window.summaLogQueue = window.summaLogQueue || [];
+  function log(name, params){
+    if(window.summaLog){ window.summaLog(name, params||{}); }
+    else { window.summaLogQueue.push([name, params||{}]); }
+  }
+
+  // Extract the code: path /vs/<CODE>, or ?c=CODE / #CODE fallbacks for hosts without path rewrites.
+  function rawCode(){
+    var segs = location.pathname.split("/").filter(Boolean); // e.g. ["vs","7K2QF"]
+    var fromPath = segs.length && segs[0].toLowerCase() === "vs" ? segs[1] : (segs[segs.length-1] || "");
+    if(fromPath && fromPath.toLowerCase() !== "vs" && fromPath.toLowerCase() !== "index.html") return fromPath;
+    var q = new URLSearchParams(location.search).get("c");
+    if(q) return q;
+    if(location.hash) return location.hash.replace(/^#/, "");
+    return "";
+  }
+
+  // Keep only allowed chars, uppercase, cap length — never echo raw URL text into the DOM.
+  function sanitize(s){
+    return (s||"").toUpperCase().split("").filter(function(c){ return ALPHABET.indexOf(c) !== -1; }).join("").slice(0, CODE_LEN);
+  }
+
+  var code = sanitize(rawCode());
+  var storeLinks = document.querySelectorAll(".js-appstore");
+  for(var i=0;i<storeLinks.length;i++) storeLinks[i].href = APP_STORE_URL;
+
+  if(code.length === CODE_LEN){
+    document.getElementById("noCode").classList.add("hidden");
+    document.getElementById("invite").classList.remove("hidden");
+
+    var tiles = document.getElementById("codeTiles");
+    code.split("").forEach(function(ch){
+      var d = document.createElement("div");
+      d.className = "t"; d.textContent = ch; tiles.appendChild(d);
+    });
+    document.getElementById("codeText").textContent = code;
+
+    document.getElementById("getBtn").addEventListener("click", function(){
+      log("web_vs_get_app_click", { code: code });
+    });
+    document.getElementById("openBtn").addEventListener("click", function(){
+      log("web_vs_open_app_click", { code: code });
+      // Custom scheme opens the app for people who already have it (if the universal link didn't fire).
+      window.location.href = "summa://vs/" + code;
+    });
+
+    log("web_vs_invite_view", { code: code });
+  } else {
+    document.getElementById("invite").classList.add("hidden");
+    document.getElementById("noCode").classList.remove("hidden");
+    log("web_vs_invite_view", { code: "" });
+  }
+})();
+</script>
+
+<!-- Firebase Analytics (loads independently; never blocks the page). -->
+<script type="module">
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCiKKBQIK4esJUsDq8N99vOoixlfQ7TLKo",
+    authDomain: "summa-94cbd.firebaseapp.com",
+    projectId: "summa-94cbd",
+    storageBucket: "summa-94cbd.firebasestorage.app",
+    messagingSenderId: "848189543790",
+    appId: "1:848189543790:web:91728c8c059fdbe1e21d7f",
+    measurementId: "G-3XTY2F9DHC",   // must start with "G-" to enable analytics
+  };
+  // Skip analytics on local dev so test opens never pollute the real data.
+  const H = location.hostname;
+  const IS_LOCAL = H===""||H==="localhost"||H.endsWith(".local")||
+    /^127\./.test(H)||/^10\./.test(H)||/^192\.168\./.test(H)||/^172\.(1[6-9]|2\d|3[01])\./.test(H);
+  if(!IS_LOCAL && FIREBASE_CONFIG.measurementId.startsWith("G-")){
+    try{
+      const {initializeApp} = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+      const {getAnalytics, logEvent} = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js");
+      const app = initializeApp(FIREBASE_CONFIG);
+      const analytics = getAnalytics(app);
+      window.summaLog = (name,params)=>{ try{ logEvent(analytics,name,params||{}); }catch(_){} };
+      (window.summaLogQueue||[]).forEach(([n,p])=>window.summaLog(n,p));
+      window.summaLogQueue=[];
+    }catch(e){ console.warn("Summa analytics unavailable:",e); }
+  } else {
+    console.info(IS_LOCAL ? "Summa analytics off (local dev)." : "Summa analytics not configured.");
+    window.summaLog=(n,p)=>console.debug("[analytics]",n,p||{});
+    (window.summaLogQueue||[]).forEach(([n,p])=>window.summaLog(n,p));
+  }
+</script>
+</body>
+</html>

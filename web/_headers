@@ -1,0 +1,3 @@
+# Serve the Apple App Site Association as JSON (iOS fetches it to resolve universal links).
+/.well-known/apple-app-site-association
+  Content-Type: application/json
