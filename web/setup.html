@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Summa — Setup preview</title>
+<!--
+  LOCAL PREVIEW TOOL — not part of the site, do not push to summa-docs.
+  Renders a single puzzle in its unsolved "setup" state (target + empty
+  operator slots + number pool), styled like the app's play screen.
+  Swap FEATURE below to preview a different puzzle.
+-->
+<link rel="preload" href="fonts/summa-numbers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/summa-logo.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"SummaNumbers";src:url("fonts/summa-numbers.woff2") format("woff2");font-weight:600;font-display:swap;}
+@font-face{font-family:"SummaLogo";src:url("fonts/summa-logo.woff2") format("woff2");font-weight:600;font-display:swap;}
+:root{
+  --paper:#EDE3D2; --paper-lift:#F4ECDC;
+  --tile:#D9B98A; --tile-deep:#C9A472;
+  --ink:#3A2D1F; --ink-mid:#5C4A36; --ink-light:#7C6748; --ink-muted:#A9947A;
+  --accent:#7A5230; --accent-deep:#5E3D22; --gold:#BF8C2C;
+  --success:#5A7A3E; --cream:#FFFAF0;
+  --brand:ui-serif,"New York",Georgia,"Times New Roman",serif;
+  --numbers:"SummaNumbers",ui-serif,Georgia,serif;
+  --logo:"SummaLogo",ui-serif,Georgia,serif;
+  --tile-w:70px;
+  --tile-h:calc(var(--tile-w) * 78 / 62);
+  --tile-r:calc(var(--tile-w) * 12 / 62);
+  --op-w:calc(var(--tile-w) * 32 / 62);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+[hidden]{display:none!important;}
+html,body{margin:0;height:100%;}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--brand);
+  overflow:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+#app{
+  max-width:460px;margin:0 auto;min-height:100dvh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 26px calc(28px + env(safe-area-inset-bottom));position:relative;
+}
+/* App-like top bar with the Σ mark + wordmark */
+.topbar{
+  width:100%;padding-top:calc(env(safe-area-inset-top) + 18px);
+  display:flex;justify-content:center;flex:0 0 auto;
+}
+.brand{display:flex;flex-direction:column;align-items:center;gap:9px;}
+.brand .mark{
+  width:58px;height:58px;border-radius:15px;
+  background:linear-gradient(to bottom,var(--tile),var(--tile-deep));
+  box-shadow:0 4px 12px rgba(80,55,25,.24),inset 0 1px 0 rgba(255,250,240,.5);
+  display:flex;align-items:center;justify-content:center;
+}
+.brand .mark span{font-family:var(--logo);font-size:35px;color:var(--ink);line-height:1;padding-top:2px;}
+.brand .wordmark{font-family:var(--brand);font-size:23px;font-weight:600;letter-spacing:1px;color:var(--ink);}
+
+.spacer{flex:1 1 auto;min-height:10px;}
+
+/* Target */
+.target{text-align:center;}
+.target .reach{font-family:var(--brand);font-size:16px;font-weight:500;letter-spacing:2.5px;color:var(--ink-light);}
+.target .value{font-family:var(--numbers);font-size:112px;line-height:1;color:var(--ink);text-shadow:0 1px 1px rgba(244,236,220,.6);margin-top:2px;}
+
+/* Expression (empty wells + operator glyphs) */
+.expr-wrap{width:100%;display:flex;justify-content:center;margin-top:26px;}
+.expr{display:flex;align-items:center;justify-content:center;}
+.well{width:var(--tile-w);height:var(--tile-h);border-radius:var(--tile-r);position:relative;flex:0 0 auto;background:rgba(122,82,48,.08);}
+.well::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(80,55,25,.18) 0%,rgba(80,55,25,0) 10%,rgba(255,250,240,0) 97.5%,rgba(255,250,240,.40) 100%);}
+.op{width:var(--op-w);height:var(--tile-h);flex:0 0 auto;}
+.op svg{display:block;width:100%;height:100%;}
+
+/* Tiles */
+.tile{
+  width:var(--tile-w);height:var(--tile-h);border-radius:var(--tile-r);position:relative;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--numbers);font-size:calc(var(--tile-w) * .5);color:var(--ink);
+  background:linear-gradient(to bottom,var(--tile),var(--tile-deep));
+  box-shadow:0 4px 12px rgba(80,55,25,.20),0 1px 2px rgba(80,55,25,.15);
+  z-index:1;
+}
+.tile::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(255,250,240,.60) 0%,rgba(255,250,240,0) 2.5%,rgba(60,40,15,0) 97.5%,rgba(60,40,15,.18) 100%);}
+.poolcell{width:var(--tile-w);height:var(--tile-h);flex:0 0 auto;position:relative;}
+
+/* Pool */
+.pool{display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:6px;}
+.pool .row{display:flex;gap:14px;justify-content:center;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark"><span>&#931;</span></div>
+      <div class="wordmark">Summa</div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <div class="target">
+    <div class="reach">REACH</div>
+    <div class="value" id="targetValue">7</div>
+  </div>
+  <div class="expr-wrap"><div class="expr" id="expr"></div></div>
+
+  <div class="spacer"></div>
+
+  <div class="pool" id="pool"></div>
+
+  <div class="spacer"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ---- The puzzle to preview (unsolved setup state) ---- */
+const FEATURE = {
+  poolNumbers: [2,9,4,3],          // tiles as they sit in the pool (shuffled, unplaced)
+  operators: ["-","*","+"],        // _ − _ × _ + _
+  target: 7,                       // 9 − 2×3 + 4 = 7  (naive L→R trap = 25)
+};
+
+const slotCount = FEATURE.operators.length + 1;
+const $ = id => document.getElementById(id);
+const els = {};
+["targetValue","expr","pool"].forEach(k=>els[k]=$(k));
+
+function valueString(n){ return Number(n).toLocaleString("en-US",{maximumFractionDigits:2}); }
+
+function opSVG(op){
+  const W=32,H=78,cx=16,cy=39;
+  const e=W*0.225, es=e*0.82, lw=Math.max(1.5,W*0.075), col="#5C4A36";
+  const line=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${lw}" stroke-linecap="round"/>`;
+  let inner="";
+  if(op==="+") inner=line(cx-es,cy,cx+es,cy)+line(cx,cy-es,cx,cy+es);
+  else if(op==="-") inner=line(cx-es,cy,cx+es,cy);
+  else if(op==="*"){const d=e*0.707;inner=line(cx-d,cy-d,cx+d,cy+d)+line(cx+d,cy-d,cx-d,cy+d);}
+  return `<svg viewBox="0 0 ${W} ${H}">${inner}</svg>`;
+}
+
+function buildExpression(){
+  els.expr.innerHTML="";
+  const ops=FEATURE.operators;
+  for(let i=0;i<slotCount;i++){
+    const w=document.createElement("div");w.className="well";els.expr.appendChild(w);
+    if(i<slotCount-1){const o=document.createElement("div");o.className="op";o.innerHTML=opSVG(ops[i]);els.expr.appendChild(o);}
+  }
+}
+function buildPool(){
+  els.pool.innerHTML="";
+  const nums=FEATURE.poolNumbers, count=nums.length;
+  const rowCount=Math.max(1,Math.ceil(count/4)), perRow=Math.ceil(count/rowCount);
+  for(let start=0;start<count;start+=perRow){
+    const row=document.createElement("div");row.className="row";
+    for(let i=start;i<Math.min(start+perRow,count);i++){
+      const c=document.createElement("div");c.className="poolcell";
+      const t=document.createElement("div");t.className="tile";
+      const g=document.createElement("span");g.textContent=valueString(nums[i]);
+      t.appendChild(g);c.appendChild(t);row.appendChild(c);
+    }
+    els.pool.appendChild(row);
+  }
+}
+function fitExpression(){
+  document.documentElement.style.setProperty("--tile-w","70px");
+  const avail = els.expr.parentElement.clientWidth;
+  const need = els.expr.scrollWidth;
+  if(need>avail){ const w=Math.max(44, Math.floor(70*avail/need)); document.documentElement.style.setProperty("--tile-w", w+"px"); }
+}
+
+function render(){
+  els.targetValue.textContent=valueString(FEATURE.target);
+  buildExpression(); buildPool(); fitExpression();
+}
+window.addEventListener("resize",render,{passive:true});
+render();
+</script>
+</body>
+</html>

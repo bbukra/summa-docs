@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Summa — Rush Reel</title>
+<!--
+  LOCAL RECORDING TOOL — not part of the site, do not push.
+  Auto-plays a scripted Puzzle Rush run for a 20s vertical ad:
+    0-1s intro · 1-5s solve P1 · 5-10s solve P2 · 10-17s fail P3 · 17-20s Time's up + CTA
+  Open on your phone (portrait), screen-record, add music/SFX in your editor.
+  Tap anywhere to replay.
+-->
+<link rel="preload" href="fonts/summa-numbers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/summa-logo.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"SummaNumbers";src:url("fonts/summa-numbers.woff2") format("woff2");font-weight:600;font-display:swap;}
+@font-face{font-family:"SummaLogo";src:url("fonts/summa-logo.woff2") format("woff2");font-weight:600;font-display:swap;}
+:root{
+  --paper:#EDE3D2; --paper-lift:#F4ECDC;
+  --tile:#D9B98A; --tile-deep:#C9A472;
+  --ink:#3A2D1F; --ink-mid:#5C4A36; --ink-light:#7C6748; --ink-muted:#A9947A;
+  --accent:#7A5230; --accent-deep:#5E3D22; --gold:#BF8C2C;
+  --success:#5A7A3E; --error:#A04832; --cream:#FFFAF0;
+  --correct-top:#A9C089; --correct-bottom:#88A765; --correct-ink:#2F4321;
+  --wrong-top:#E0BFA0; --wrong-bottom:#C99A78;
+  --brand:ui-serif,"New York",Georgia,"Times New Roman",serif;
+  --numbers:"SummaNumbers",ui-serif,Georgia,serif;
+  --logo:"SummaLogo",ui-serif,Georgia,serif;
+  --tile-w:52px;
+  --tile-h:calc(var(--tile-w) * 78 / 62);
+  --tile-r:calc(var(--tile-w) * 12 / 62);
+  --op-w:calc(var(--tile-w) * 32 / 62);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+[hidden]{display:none!important;}
+html,body{margin:0;height:100%;}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--brand);
+  overflow:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+#app{max-width:420px;margin:0 auto;min-height:100dvh;position:relative;
+  display:flex;flex-direction:column;padding:0 46px calc(160px + env(safe-area-inset-bottom));}
+
+/* ---- HUD (timer + score) ---- */
+.hud{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding-top:calc(20px + env(safe-area-inset-top));opacity:0;transition:opacity .3s;
+}
+.hud.show{opacity:1;}
+.hud .lab{font-family:var(--brand);font-size:10px;font-weight:600;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--ink-light);}
+.hud .timer .v{font-family:var(--numbers);font-size:32px;line-height:1;color:var(--ink);margin-top:2px;}
+.hud .score{text-align:right;}
+.hud .score .v{font-family:var(--numbers);font-size:26px;line-height:1;color:var(--ink);margin-top:2px;}
+.hud .timer.warn .v{color:var(--error);animation:blink 1s steps(1,end) infinite;}
+@keyframes blink{0%,49%{opacity:1;}50%,100%{opacity:.18;}}
+
+/* ---- Board ---- */
+.stage{flex:1;display:flex;flex-direction:column;opacity:0;transition:opacity .35s;}
+.stage.show{opacity:1;}
+.spacer{flex:1 1 auto;min-height:8px;}
+.target{text-align:center;margin-top:8px;}
+.target .reach{font-family:var(--brand);font-size:14px;font-weight:500;letter-spacing:2.5px;color:var(--ink-light);}
+.target .value{font-family:var(--numbers);font-size:84px;line-height:1;color:var(--ink);margin-top:2px;}
+.expr-wrap{width:100%;display:flex;justify-content:center;margin-top:16px;}
+.expr{display:flex;align-items:center;justify-content:center;}
+.expr.shake{animation:shake .4s ease;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-9px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(4px);}}
+.well{width:var(--tile-w);height:var(--tile-h);border-radius:var(--tile-r);position:relative;flex:0 0 auto;background:rgba(122,82,48,.08);}
+.well::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(80,55,25,.18) 0%,rgba(80,55,25,0) 10%,rgba(255,250,240,0) 97.5%,rgba(255,250,240,.40) 100%);}
+.op{width:var(--op-w);height:var(--tile-h);flex:0 0 auto;}
+.op svg{display:block;width:100%;height:100%;}
+.result{height:52px;margin-top:12px;text-align:center;}
+.result .r{font-family:var(--brand);font-size:28px;font-weight:600;opacity:0;transition:opacity .2s;}
+.result .r.show{opacity:1;}
+.result .r.ok{color:var(--success);}
+.result .r.wrong{color:var(--error);}
+
+.tile{
+  width:var(--tile-w);height:var(--tile-h);border-radius:var(--tile-r);position:relative;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--numbers);font-size:calc(var(--tile-w) * .5);color:var(--ink);
+  background:linear-gradient(to bottom,var(--tile),var(--tile-deep));
+  box-shadow:0 4px 12px rgba(80,55,25,.20),0 1px 2px rgba(80,55,25,.15);
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background .2s,color .2s;
+  will-change:transform;z-index:1;
+}
+.tile::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(255,250,240,.60) 0%,rgba(255,250,240,0) 2.5%,rgba(60,40,15,0) 97.5%,rgba(60,40,15,.18) 100%);}
+.tile.wrong{background:linear-gradient(to bottom,var(--wrong-top),var(--wrong-bottom));color:var(--error);
+  box-shadow:0 12px 22px rgba(160,72,50,.25);outline:2px solid rgba(160,72,50,.7);outline-offset:2px;}
+.tile.correct{background:linear-gradient(to bottom,var(--correct-top),var(--correct-bottom));color:var(--correct-ink);
+  box-shadow:0 16px 24px rgba(90,122,62,.32);outline:2px solid rgba(90,122,62,.75);outline-offset:2px;}
+.tile.pop{animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+.poolcell{width:var(--tile-w);height:var(--tile-h);flex:0 0 auto;position:relative;}
+.pool{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:4px;}
+.pool .row{display:flex;gap:12px;justify-content:center;}
+
+/* ---- Tap indicator (taps variation, ?taps=1) ---- */
+.tapdot{position:fixed;left:0;top:0;width:58px;height:58px;border-radius:50%;
+  background:rgba(58,45,31,.20);border:2px solid rgba(58,45,31,.32);
+  transform:translate(-50%,-50%);pointer-events:none;z-index:70;opacity:0;}
+.tapdot.pulse{animation:tapPulse .42s ease-out;}
+@keyframes tapPulse{0%{opacity:.6;transform:translate(-50%,-50%) scale(.5);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.2);}}
+.tapdot.hold{opacity:.9;transition:left .56s cubic-bezier(.2,.7,.3,1),top .56s cubic-bezier(.2,.7,.3,1);}
+
+/* ---- Intro ---- */
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 32px;text-align:center;}
+.intro{background:var(--paper);z-index:30;opacity:1;transition:opacity .4s;}
+.mark{width:96px;height:96px;border-radius:24px;
+  background:linear-gradient(to bottom,var(--tile),var(--tile-deep));
+  box-shadow:0 8px 22px rgba(80,55,25,.28),inset 0 1px 0 rgba(255,250,240,.5);
+  display:flex;align-items:center;justify-content:center;}
+.mark span{font-family:var(--logo);font-size:58px;color:var(--ink);line-height:1;padding-top:3px;}
+.intro .name{font-family:var(--logo);font-size:40px;color:var(--ink);margin-top:20px;}
+.intro .mode{font-family:var(--brand);font-size:15px;font-weight:500;letter-spacing:4px;
+  text-transform:uppercase;color:var(--accent);margin-top:10px;}
+
+/* ---- Time's up ---- */
+.timesup{background:rgba(28,18,8,.92);z-index:40;opacity:0;transition:opacity .35s;pointer-events:none;}
+.timesup.show{opacity:1;}
+.timesup .big{font-family:var(--brand);font-size:40px;font-weight:600;color:var(--cream);letter-spacing:.5px;}
+
+/* ---- Outro ---- */
+.outro{background:var(--paper);z-index:50;opacity:0;transition:opacity .5s;pointer-events:none;}
+.outro.show{opacity:1;}
+.outro.show .mark{animation:breathe 2.6s ease-in-out infinite;}
+@keyframes breathe{0%,100%{transform:scale(1);}50%{transform:scale(1.045);}}
+.outro .name{font-family:var(--logo);font-size:38px;color:var(--ink);margin-top:20px;}
+.outro .cta{font-family:var(--brand);font-size:21px;font-weight:600;color:var(--ink);margin-top:22px;line-height:1.3;}
+.outro .sub{font-family:var(--brand);font-size:15px;color:var(--accent);margin-top:12px;font-weight:600;}
+.outro .sub .apple{width:16px;height:16px;vertical-align:-2px;margin-right:6px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hud" id="hud">
+    <div class="timer" id="timer"><div class="lab">Time</div><div class="v" id="timerV">0:16</div></div>
+    <div class="score"><div class="lab">Score</div><div class="v" id="scoreV">11,359</div></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="spacer"></div>
+    <div class="target"><div class="reach">REACH</div><div class="value" id="targetValue">2</div></div>
+    <div class="expr-wrap"><div class="expr" id="expr"></div></div>
+    <div class="result"><div class="r" id="resultR">= 0</div></div>
+    <div class="spacer"></div>
+    <div class="pool" id="pool"></div>
+  </div>
+</div>
+
+<div class="overlay intro" id="intro">
+  <div class="mark"><span>&#931;</span></div>
+  <div class="name">Summa</div>
+  <div class="mode">Puzzle Rush</div>
+</div>
+
+<div class="overlay timesup" id="timesup"><div class="big">Time's up</div></div>
+
+<div class="overlay outro" id="outro">
+  <div class="mark"><span>&#931;</span></div>
+  <div class="name">Summa</div>
+  <div class="cta">Think you can do better?</div>
+  <div class="sub"><svg class="apple" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.9c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.4 2 .9 0 1.3-.6 2.4-.6 1.1 0 1.4.6 2.4.6 1 0 1.6-.9 2.3-1.9.7-1.1 1-2.1 1-2.2 0 0-1.9-.7-1.9-3zm-2-5.6c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.1-.5.5-.9 1.4-.8 2.3.9.1 1.8-.4 2.2-1z"/></svg>Download for free on App Store</div>
+</div>
+
+<div class="tapdot" id="tapdot"></div>
+
+<script>
+"use strict";
+
+/* ---- The scripted run (pool-index tap orders fill slots left-to-right) ---- */
+const P1={numbers:[1,2,3],       operators:["+","-"],     target:2, taps:[0,2,1]};        // 1+3-2 = 2
+const P2={numbers:[1,2,3,4],     operators:["*","+","-"], target:5, taps:[0,3,2,1]};      // 1×4+3-2 = 5
+const P3={numbers:[2,3,4,6],     operators:["*","-","+"], target:4,
+  a1:[0,1,2,3],   // 2×3-4+6 = 8  (the near-miss: swap 4 & 6 to win)
+  a2:[2,0,3,1],   // 4×2-6+3 = 5
+  swap:[1,3]};    // swap slots 1 & 3 → 4×3-6+2 = 8
+
+const $=id=>document.getElementById(id);
+const els={};
+["hud","timer","timerV","scoreV","stage","targetValue","expr","resultR","pool","intro","timesup","outro","tapdot"].forEach(k=>els[k]=$(k));
+const SHOW_TAPS = new URLSearchParams(location.search).get("taps")==="1";
+
+function valueString(n){ return Number(n).toLocaleString("en-US",{maximumFractionDigits:2}); }
+function commas(n){ return Number(n).toLocaleString("en-US"); }
+
+function opSVG(op){
+  const W=32,H=78,cx=16,cy=39,e=W*0.225,es=e*0.82,lw=Math.max(1.5,W*0.075),col="#5C4A36";
+  const line=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${lw}" stroke-linecap="round"/>`;
+  let inner="";
+  if(op==="+") inner=line(cx-es,cy,cx+es,cy)+line(cx,cy-es,cx,cy+es);
+  else if(op==="-") inner=line(cx-es,cy,cx+es,cy);
+  else if(op==="*"){const d=e*0.707;inner=line(cx-d,cy-d,cx+d,cy+d)+line(cx+d,cy-d,cx-d,cy+d);}
+  return `<svg viewBox="0 0 ${W} ${H}">${inner}</svg>`;
+}
+function evaluate(nums,ops){
+  const v=nums.slice(),o=ops.slice();let i=0;
+  while(i<o.length){ if(o[i]==="*"||o[i]==="/"){ v[i]=o[i]==="*"?v[i]*v[i+1]:v[i]/v[i+1]; v.splice(i+1,1);o.splice(i,1);} else i++; }
+  let r=v[0]; for(let j=0;j<o.length;j++) r=o[j]==="+"?r+v[j+1]:r-v[j+1]; return r;
+}
+
+let CFG=null,slotCount=0,placements=[],wells=[],poolCells=[],tiles=[];
+
+function setupPuzzle(p){
+  CFG=p; slotCount=p.operators.length+1; placements=new Array(slotCount).fill(null);
+  els.targetValue.textContent=valueString(p.target);
+  setResult("","");
+  // expression
+  els.expr.classList.remove("shake");
+  els.expr.innerHTML=""; wells=new Array(slotCount).fill(null);
+  for(let i=0;i<slotCount;i++){
+    const w=document.createElement("div");w.className="well";wells[i]=w;els.expr.appendChild(w);
+    if(i<slotCount-1){const o=document.createElement("div");o.className="op";o.innerHTML=opSVG(p.operators[i]);els.expr.appendChild(o);}
+  }
+  // pool
+  els.pool.innerHTML="";poolCells=[];
+  const count=p.numbers.length,rows=Math.max(1,Math.ceil(count/4)),per=Math.ceil(count/rows);
+  for(let s=0;s<count;s+=per){const row=document.createElement("div");row.className="row";
+    for(let i=s;i<Math.min(s+per,count);i++){const c=document.createElement("div");c.className="poolcell";poolCells[i]=c;row.appendChild(c);}
+    els.pool.appendChild(row);}
+  // tiles
+  tiles=[];
+  for(let i=0;i<count;i++){const t=document.createElement("div");t.className="tile";
+    const g=document.createElement("span");g.textContent=valueString(p.numbers[i]);t.appendChild(g);
+    tiles[i]=t;poolCells[i].appendChild(t);}
+  fitExpression();
+}
+function fitExpression(){
+  document.documentElement.style.setProperty("--tile-w","52px");
+  const avail=els.expr.parentElement.clientWidth,need=els.expr.scrollWidth;
+  if(need>avail){const w=Math.max(38,Math.floor(52*avail/need));document.documentElement.style.setProperty("--tile-w",w+"px");}
+}
+function moveTilesTo(pl){
+  const first=tiles.map(t=>t.getBoundingClientRect());
+  for(let i=0;i<tiles.length;i++){const slot=pl.indexOf(i);const home=slot!==-1?wells[slot]:poolCells[i];
+    if(tiles[i].parentElement!==home) home.appendChild(tiles[i]);}
+  tiles.forEach((t,i)=>{const last=t.getBoundingClientRect();const dx=first[i].left-last.left,dy=first[i].top-last.top;
+    if(dx||dy){t.style.transition="none";t.style.transform=`translate(${dx}px,${dy}px)`;t.getBoundingClientRect();t.style.transition="";t.style.transform="";}});
+}
+function tapPlace(poolIdx){ const slot=placements.indexOf(null); if(slot===-1) return; placements[slot]=poolIdx; moveTilesTo(placements); }
+
+/* ---- Tap / drag indicators (only when ?taps=1) ---- */
+function rand(a,b){ return a+Math.random()*(b-a); }
+function tileCenter(i){ const r=tiles[i].getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; }
+function slotCenter(s){ const r=wells[s].getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; }
+function tapPulse(x,y){ els.tapdot.classList.remove("pulse","hold"); els.tapdot.style.left=x+"px"; els.tapdot.style.top=y+"px"; void els.tapdot.offsetWidth; els.tapdot.classList.add("pulse"); }
+function tapAction(poolIdx){ if(SHOW_TAPS){ const c=tileCenter(poolIdx); tapPulse(c.x+rand(-15,15), c.y+rand(-15,15)); } tapPlace(poolIdx); }
+function dragSwap(fromSlot,toSlot){
+  const a=placements[fromSlot], b=placements[toSlot];
+  const s=slotCenter(fromSlot), d=slotCenter(toSlot), ox=rand(-14,14), oy=rand(-14,14), D=560;
+  els.tapdot.classList.remove("pulse","hold");
+  els.tapdot.style.left=(s.x+ox)+"px"; els.tapdot.style.top=(s.y+oy)+"px";
+  void els.tapdot.offsetWidth; els.tapdot.classList.add("hold");   // finger presses on source tile
+  tiles[a].style.zIndex="60";
+  tiles[a].style.transition=`transform ${D}ms cubic-bezier(.2,.7,.3,1)`;
+  tiles[b].style.transition=`transform ${D}ms cubic-bezier(.2,.7,.3,1)`;
+  requestAnimationFrame(()=>{
+    tiles[a].style.transform=`translate(${d.x-s.x}px,${d.y-s.y}px) scale(1.05)`;
+    tiles[b].style.transform=`translate(${s.x-d.x}px,${s.y-d.y}px)`;
+    els.tapdot.style.left=(d.x+ox)+"px"; els.tapdot.style.top=(d.y+oy)+"px";   // finger drags to dest
+  });
+  setTimeout(()=>{
+    placements[fromSlot]=b; placements[toSlot]=a;
+    tiles[a].style.transition="none"; tiles[b].style.transition="none";
+    tiles[a].style.transform=""; tiles[b].style.transform=""; tiles[a].style.zIndex="";
+    wells[toSlot].appendChild(tiles[a]); wells[fromSlot].appendChild(tiles[b]);
+    els.tapdot.classList.remove("hold");
+    requestAnimationFrame(()=>{ tiles[a].style.transition=""; tiles[b].style.transition=""; });
+  }, D+30);
+}
+function doSwap(){ tiles.forEach(t=>t.classList.remove("wrong")); setResult("",""); if(SHOW_TAPS) dragSwap(P3.swap[0],P3.swap[1]); else swapSlots(P3.swap[0],P3.swap[1]); }
+function setResult(text,kind){ els.resultR.textContent=text; els.resultR.className="r"+(text?" show ":" ")+(kind||""); }
+function currentResult(){ return evaluate(placements.map(p=>CFG.numbers[p]),CFG.operators); }
+
+function showCorrect(){
+  const r=currentResult();
+  tiles.forEach((t,k)=>{ if(placements.includes(k)){const slot=placements.indexOf(k);
+    setTimeout(()=>{t.classList.add("correct","pop");},slot*80);}});
+  setTimeout(()=>setResult("= "+valueString(r),"ok"),260);
+}
+function showWrong(){
+  const r=currentResult();
+  placements.forEach(p=>{ if(p!==null) tiles[p].classList.add("wrong"); });
+  setResult("= "+valueString(r),"wrong");
+  els.expr.classList.remove("shake"); void els.expr.offsetWidth; els.expr.classList.add("shake");
+}
+function clearTiles(){ placements=new Array(slotCount).fill(null); tiles.forEach(t=>t.classList.remove("wrong","correct","pop")); setResult("",""); moveTilesTo(placements); }
+function swapSlots(i,j){ const tmp=placements[i];placements[i]=placements[j];placements[j]=tmp; moveTilesTo(placements); }
+
+/* ---- HUD ---- */
+function setTimer(rem){ els.timerV.textContent="0:"+String(rem).padStart(2,"0"); if(rem<=10) els.timer.classList.add("warn"); else els.timer.classList.remove("warn"); }
+function setScore(n){ els.scoreV.textContent=commas(n); }
+
+/* ---- Scheduler ---- */
+let timers=[];
+function after(ms,fn){ timers.push(setTimeout(fn,ms)); }
+function clearAll(){ timers.forEach(clearTimeout); timers=[]; }
+
+function run(){
+  clearAll();
+  // reset visuals
+  els.intro.style.opacity="1"; els.intro.hidden=false;
+  els.timesup.classList.remove("show");
+  els.outro.classList.remove("show");
+  els.hud.classList.remove("show");
+  els.stage.classList.remove("show");
+  els.timer.classList.remove("warn");
+  setScore(11359); setTimer(20);
+
+  // 0-1s INTRO, then reveal game + P1
+  after(1000,()=>{ els.intro.style.opacity="0"; });
+  after(1400,()=>{ els.intro.hidden=true; });
+  after(1100,()=>{ setupPuzzle(P1); els.hud.classList.add("show"); els.stage.classList.add("show"); });
+
+  // timer 20..0 across 1s..21s (blinks red at <=10)
+  for(let t=1;t<=21;t++){ after(t*1000,()=>setTimer(21-t)); }
+
+  // P1 solve (~4.9-5.9s) — look time so cold viewers grasp the mechanic
+  after(4900,()=>tapAction(P1.taps[0]));
+  after(5150,()=>tapAction(P1.taps[1]));
+  after(5400,()=>tapAction(P1.taps[2]));
+  after(5550,showCorrect);
+  after(5850,()=>setScore(13899));
+
+  // 5s → P2
+  after(6500,()=>setupPuzzle(P2));
+  after(9800,()=>tapAction(P2.taps[0]));
+  after(10020,()=>tapAction(P2.taps[1]));
+  after(10240,()=>tapAction(P2.taps[2]));
+  after(10460,()=>tapAction(P2.taps[3]));
+  after(10620,showCorrect);
+  after(10950,()=>setScore(16201));
+
+  // 10s → P3 shown static until 12s
+  after(11500,()=>setupPuzzle(P3));
+
+  // 12-17s: three frantic fails
+  // attempt 1 (near-miss) 2×3-4+6 = 8
+  after(13500,()=>tapAction(P3.a1[0]));
+  after(13720,()=>tapAction(P3.a1[1]));
+  after(13940,()=>tapAction(P3.a1[2]));
+  after(14160,()=>tapAction(P3.a1[3]));
+  after(14350,showWrong);
+  after(16550,clearTiles);
+  // attempt 2  4×2-6+3 = 5
+  after(16950,()=>tapAction(P3.a2[0]));
+  after(17170,()=>tapAction(P3.a2[1]));
+  after(17390,()=>tapAction(P3.a2[2]));
+  after(17610,()=>tapAction(P3.a2[3]));
+  after(17800,showWrong);
+  // swap 1&3 → 4×3-6+2 = 8
+  after(19400,doSwap);
+  after(20050,showWrong);
+
+  // 17s TIME'S UP
+  after(21500,()=>{ els.timesup.classList.add("show"); });
+  // 18.3s OUTRO
+  after(22800,()=>{ els.timesup.classList.remove("show"); els.outro.classList.add("show"); });
+}
+
+document.addEventListener("click",run);
+window.addEventListener("resize",()=>{ if(CFG){ fitExpression(); moveTilesTo(placements);} });
+run();
+</script>
+</body>
+</html>

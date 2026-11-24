@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Summa — Reel</title>
+<!--
+  LOCAL RECORDING TOOL — not part of the site, do not push to summa-docs.
+  Open on your phone (portrait) via the local server and screen-record it.
+  It auto-plays: hook -> countdown -> solve -> end card, then loops.
+  Tap anywhere to restart the loop. Add ?text=0 to the URL to hide the baked
+  hook/CTA text (if you'd rather add your own text in CapCut / TikTok).
+  Swap FEATURE below to make a different video.
+-->
+<link rel="preload" href="fonts/summa-numbers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/summa-logo.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"SummaNumbers";src:url("fonts/summa-numbers.woff2") format("woff2");font-weight:600;font-display:swap;}
+@font-face{font-family:"SummaLogo";src:url("fonts/summa-logo.woff2") format("woff2");font-weight:600;font-display:swap;}
+:root{
+  --paper:#EDE3D2; --paper-lift:#F4ECDC;
+  --tile:#D9B98A; --tile-deep:#C9A472;
+  --ink:#3A2D1F; --ink-mid:#5C4A36; --ink-light:#7C6748; --ink-muted:#A9947A;
+  --accent:#7A5230; --accent-deep:#5E3D22; --gold:#BF8C2C;
+  --success:#5A7A3E; --cream:#FFFAF0;
+  --correct-top:#A9C089; --correct-bottom:#88A765; --correct-ink:#2F4321;
+  --brand:ui-serif,"New York",Georgia,"Times New Roman",serif;
+  --numbers:"SummaNumbers",ui-serif,Georgia,serif;
+  --logo:"SummaLogo",ui-serif,Georgia,serif;
+  --tile-w:70px;
+  --tile-h:calc(var(--tile-w) * 78 / 62);
+  --tile-r:calc(var(--tile-w) * 12 / 62);
+  --op-w:calc(var(--tile-w) * 32 / 62);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+[hidden]{display:none!important;}
+html,body{margin:0;height:100%;}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--brand);
+  overflow:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+#app{
+  max-width:460px;margin:0 auto;min-height:100dvh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 26px calc(28px + env(safe-area-inset-bottom));position:relative;
+}
+.top-space{height:calc(64px + env(safe-area-inset-top));flex:0 0 auto;}
+
+/* Hook line at the top */
+.hook{
+  font-family:var(--brand);font-size:26px;font-weight:600;color:var(--ink);
+  text-align:center;line-height:1.25;min-height:1.2em;
+  text-shadow:0 1px 1px rgba(244,236,220,.6);
+}
+
+/* Countdown pill */
+.count{
+  margin-top:16px;min-width:56px;height:56px;padding:0 14px;border-radius:28px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--paper-lift);box-shadow:0 3px 10px rgba(80,55,25,.18);
+  font-family:var(--numbers);font-size:28px;color:var(--accent);
+  transition:opacity .2s;
+}
+.count.hide{opacity:0;}
+
+.spacer{flex:1 1 auto;min-height:10px;}
+
+/* Target */
+.target{text-align:center;}
+.target .reach{font-family:var(--brand);font-size:16px;font-weight:500;letter-spacing:2.5px;color:var(--ink-light);}
+.target .value{font-family:var(--numbers);font-size:112px;line-height:1;color:var(--ink);text-shadow:0 1px 1px rgba(244,236,220,.6);margin-top:2px;}
+
+/* Expression */
+.expr-wrap{width:100%;display:flex;justify-content:center;margin-top:22px;}
+.expr{display:flex;align-items:center;justify-content:center;}
+.well{width:var(--tile-w);height:var(--tile-h);border-radius:var(--tile-r);position:relative;flex:0 0 auto;background:rgba(122,82,48,.08);}
+.well::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(80,55,25,.18) 0%,rgba(80,55,25,0) 10%,rgba(255,250,240,0) 97.5%,rgba(255,250,240,.40) 100%);}
+.op{width:var(--op-w);height:var(--tile-h);flex:0 0 auto;}
+.op svg{display:block;width:100%;height:100%;}
+
+/* Result line */
+.result{height:64px;margin-top:14px;text-align:center;}
+.okline{opacity:0;transform:translateY(16px);transition:opacity .4s ease-out,transform .4s ease-out;
+  font-family:var(--brand);font-size:30px;font-weight:600;color:var(--success);text-shadow:0 1px 1px rgba(255,250,240,.6);}
+.okline.show{opacity:1;transform:translateY(0);}
+
+/* Tiles */
+.tile{
+  width:var(--tile-w);height:var(--tile-h);border-radius:var(--tile-r);position:relative;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--numbers);font-size:calc(var(--tile-w) * .5);color:var(--ink);
+  background:linear-gradient(to bottom,var(--tile),var(--tile-deep));
+  box-shadow:0 4px 12px rgba(80,55,25,.20),0 1px 2px rgba(80,55,25,.15);
+  transition:transform .42s cubic-bezier(.2,.8,.2,1),box-shadow .25s,background .25s,color .25s;
+  will-change:transform;z-index:1;
+}
+.tile::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(255,250,240,.60) 0%,rgba(255,250,240,0) 2.5%,rgba(60,40,15,0) 97.5%,rgba(60,40,15,.18) 100%);}
+.tile.correct{background:linear-gradient(to bottom,var(--correct-top),var(--correct-bottom));color:var(--correct-ink);
+  box-shadow:0 16px 24px rgba(90,122,62,.32),0 1px 2px rgba(80,55,25,.15);outline:2px solid rgba(90,122,62,.75);outline-offset:2px;}
+.tile.pop{animation:pop .42s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+.poolcell{width:var(--tile-w);height:var(--tile-h);flex:0 0 auto;position:relative;}
+
+/* Pool */
+.pool{display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:6px;}
+.pool .row{display:flex;gap:14px;justify-content:center;}
+
+/* End card overlay */
+.endcard{
+  position:fixed;inset:0;z-index:50;background:var(--paper);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  opacity:0;pointer-events:none;transition:opacity .45s ease;
+  padding:0 32px calc(40px + env(safe-area-inset-bottom));
+}
+.endcard.show{opacity:1;}
+.endcard .mark{
+  width:96px;height:96px;border-radius:24px;margin-bottom:26px;
+  background:linear-gradient(to bottom,var(--tile),var(--tile-deep));
+  box-shadow:0 8px 22px rgba(80,55,25,.28),inset 0 1px 0 rgba(255,250,240,.5);
+  display:flex;align-items:center;justify-content:center;
+}
+.endcard .mark span{font-family:var(--logo);font-size:58px;color:var(--ink);line-height:1;padding-top:3px;}
+/* Gentle breathing so the end-card never goes fully static (keeps screen recording alive). */
+.endcard.show .mark{animation:breathe 2.6s ease-in-out infinite;}
+@keyframes breathe{0%,100%{transform:scale(1);}50%{transform:scale(1.045);}}
+.endcard .big{font-family:var(--brand);font-size:30px;font-weight:600;color:var(--ink);text-align:center;line-height:1.25;}
+.endcard .cta{font-family:var(--brand);font-size:19px;color:var(--accent);margin-top:20px;font-weight:600;}
+.endcard .handle{font-family:var(--brand);font-size:16px;color:var(--ink-light);margin-top:8px;letter-spacing:.4px;}
+
+.notext .hook,.notext .count,.notext .endcard .big,.notext .endcard .cta,.notext .endcard .handle{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top-space"></div>
+  <div class="hook" id="hook">Can you make&nbsp;24?</div>
+  <div class="count" id="count">5</div>
+
+  <div class="spacer"></div>
+
+  <div class="target">
+    <div class="reach">REACH</div>
+    <div class="value" id="targetValue">24</div>
+  </div>
+  <div class="expr-wrap"><div class="expr" id="expr"></div></div>
+  <div class="result"><div class="okline" id="okline">= 24</div></div>
+
+  <div class="spacer"></div>
+
+  <div class="pool" id="pool"></div>
+</div>
+
+<div class="endcard" id="endcard">
+  <div class="mark"><span>&#931;</span></div>
+  <div class="big">A new number puzzle<br>every day</div>
+  <div class="cta">Play free at playsumma.netlify.app</div>
+  <div class="handle">@playsumma</div>
+</div>
+
+<script>
+"use strict";
+
+/* ---- The featured puzzle (swap this to make a different reel) ---- */
+const FEATURE = {
+  numbers: [2,3,4,6],
+  operators: ["*","-","+"],       // _ × _ − _ + _
+  target: 4,
+  placements: [0,1,3,2],          // pool indices in slot order → 2×3−6+4 = 4
+  hook: "Can you make&nbsp;4?",
+  solveLabel: "2 × 3 − 6 + 4",
+};
+
+const slotCount = FEATURE.operators.length + 1;
+const $ = id => document.getElementById(id);
+const els = {};
+["hook","count","targetValue","expr","okline","pool","endcard"].forEach(k=>els[k]=$(k));
+
+if(new URLSearchParams(location.search).get("text")==="0") document.body.classList.add("notext");
+
+function valueString(n){ return Number(n).toLocaleString("en-US",{maximumFractionDigits:2}); }
+
+function opSVG(op){
+  const W=32,H=78,cx=16,cy=39;
+  const e=W*0.225, es=e*0.82, lw=Math.max(1.5,W*0.075), col="#5C4A36";
+  const line=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${lw}" stroke-linecap="round"/>`;
+  let inner="";
+  if(op==="+") inner=line(cx-es,cy,cx+es,cy)+line(cx,cy-es,cx,cy+es);
+  else if(op==="-") inner=line(cx-es,cy,cx+es,cy);
+  else if(op==="*"){const d=e*0.707;inner=line(cx-d,cy-d,cx+d,cy+d)+line(cx+d,cy-d,cx-d,cy+d);}
+  return `<svg viewBox="0 0 ${W} ${H}">${inner}</svg>`;
+}
+
+let wells=[], poolCells=[], tiles=[];
+
+function buildExpression(){
+  els.expr.innerHTML=""; wells=new Array(slotCount).fill(null);
+  const ops=FEATURE.operators;
+  const makeWell=i=>{const w=document.createElement("div");w.className="well";wells[i]=w;return w;};
+  const makeOp=s=>{const o=document.createElement("div");o.className="op";o.innerHTML=opSVG(s);return o;};
+  for(let i=0;i<slotCount;i++){ els.expr.appendChild(makeWell(i)); if(i<slotCount-1) els.expr.appendChild(makeOp(ops[i])); }
+}
+function buildPool(){
+  els.pool.innerHTML=""; poolCells=[];
+  const count=FEATURE.numbers.length, rowCount=Math.max(1,Math.ceil(count/4)), perRow=Math.ceil(count/rowCount);
+  for(let start=0;start<count;start+=perRow){
+    const row=document.createElement("div");row.className="row";
+    for(let i=start;i<Math.min(start+perRow,count);i++){const c=document.createElement("div");c.className="poolcell";poolCells[i]=c;row.appendChild(c);}
+    els.pool.appendChild(row);
+  }
+}
+function buildTiles(){
+  tiles.length=0;
+  for(let i=0;i<FEATURE.numbers.length;i++){
+    const t=document.createElement("div");t.className="tile";
+    const g=document.createElement("span");g.textContent=valueString(FEATURE.numbers[i]);
+    t.appendChild(g);tiles[i]=t;poolCells[i].appendChild(t);
+  }
+}
+/* FLIP glide when a tile changes home */
+function moveTilesTo(placements){
+  const first=tiles.map(t=>t.getBoundingClientRect());
+  for(let i=0;i<tiles.length;i++){
+    const slot=placements.indexOf(i);
+    const home = slot!==-1 ? wells[slot] : poolCells[i];
+    if(tiles[i].parentElement!==home) home.appendChild(tiles[i]);
+  }
+  tiles.forEach((t,i)=>{
+    const last=t.getBoundingClientRect();
+    const dx=first[i].left-last.left, dy=first[i].top-last.top;
+    if(dx||dy){ t.style.transition="none"; t.style.transform=`translate(${dx}px,${dy}px)`;
+      t.getBoundingClientRect(); t.style.transition=""; t.style.transform=""; }
+  });
+}
+
+function fitExpression(){
+  document.documentElement.style.setProperty("--tile-w","70px");
+  const avail = els.expr.parentElement.clientWidth;
+  const need = els.expr.scrollWidth;
+  if(need>avail){ const w=Math.max(44, Math.floor(70*avail/need)); document.documentElement.style.setProperty("--tile-w", w+"px"); }
+}
+
+/* ---- The timed sequence ---- */
+let timers=[];
+function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
+function after(ms,fn){ timers.push(setTimeout(fn,ms)); }
+
+function reset(){
+  clearTimers();
+  els.hook.innerHTML=FEATURE.hook;
+  els.targetValue.textContent=valueString(FEATURE.target);
+  els.okline.textContent="= "+valueString(FEATURE.target);
+  els.okline.classList.remove("show");
+  els.endcard.classList.remove("show");
+  els.count.classList.remove("hide");
+  buildExpression(); buildPool(); buildTiles(); fitExpression();
+}
+
+/* Single deterministic play: hold on hook → countdown → solve → hold on end card.
+   No internal loop (the platform loops the clip). Tap to replay for a re-record. */
+function run(){
+  reset();
+  const START=10, HOLD=900, STEP=800;   // countdown starts at 10 (tweak STEP for pace)
+  els.count.textContent=String(START);
+  let n=START;
+  const tick=()=>{ n--; els.count.textContent=String(n); if(n>1) after(STEP,tick); };
+  after(HOLD,tick);
+
+  const solveAt=HOLD + (START-1)*STEP + 500;   // ~0.5s after "1" shows
+  after(solveAt,()=>{
+    els.count.classList.add("hide");
+    els.hook.innerHTML="Yes! &nbsp;"+FEATURE.solveLabel;
+    moveTilesTo(FEATURE.placements);
+    for(let slot=0;slot<slotCount;slot++){
+      const poolIdx=FEATURE.placements[slot];
+      after(360+slot*90,()=>{ tiles[poolIdx].classList.add("correct","pop"); });
+    }
+    after(360+slotCount*90+120,()=>els.okline.classList.add("show"));
+  });
+
+  after(solveAt+2200,()=>els.endcard.classList.add("show"));   // then hold — no loop
+}
+
+document.addEventListener("click",()=>{ run(); });
+window.addEventListener("resize",()=>{}, {passive:true});
+run();
+</script>
+</body>
+</html>
